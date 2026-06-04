@@ -108,7 +108,7 @@
     <div class="hero-stats">
       <div class="stat"><div class="stat-value">24<span class="accent">+</span></div><div class="stat-label">Android 组件</div></div>
       <div class="stat"><div class="stat-value">0</div><div class="stat-label">外部依赖</div></div>
-      <div class="stat"><div class="stat-value">12<span class="accent">+</span></div><div class="stat-label">版本迭代</div></div>
+      <div class="stat"><div class="stat-value">14<span class="accent">+</span></div><div class="stat-label">版本迭代</div></div>
     </div>
   </section>
   <section class="features" id="features">
@@ -125,7 +125,46 @@
     <div class="section-title">持续进化</div>
     <div class="timeline">
       <div class="version-item latest">
-        <div class="version-header"><div style="display:flex;align-items:center;gap:10px;"><span class="version-tag">v2.9.0</span><span class="version-latest-badge">NEW</span></div><span class="version-date">2026-06-04</span></div>
+        <div class="version-header"><div style="display:flex;align-items:center;gap:10px;"><span class="version-tag">v2.13.0</span><span class="version-latest-badge">NEW</span></div><span class="version-date">2026-06-04</span></div>
+        <ul class="version-changes">
+          <li class="new">XML 格式化与重构（Shift+Alt+F 格式化、提取到 @string/@dimen、包裹/解开布局）</li>
+          <li class="new">性能分析面板（布局深度、视图统计、Measure 估算、Overdraw 检测）</li>
+          <li class="new">资源管理增强（@drawable/@layout/@string/@dimen 自动补全、悬停预览）</li>
+          <li class="new">布局健康评分、统计面板、Overdraw 热力图覆盖层</li>
+        </ul>
+        <div class="version-links"><a href="v2.13.0/CHANGELOG.md" class="version-link primary" target="_blank">更新日志</a><a href="https://github.com/cheng-X01/android-layout-editor" class="version-link" target="_blank">源码</a></div>
+      </div>
+      <div class="version-item">
+        <div class="version-header"><div style="display:flex;align-items:center;gap:10px;"><span class="version-tag">v2.12.0</span></div><span class="version-date">2026-06-04</span></div>
+        <ul class="version-changes">
+          <li class="new">Lint 验证（9 条规则：嵌套、根布局、weight、硬编码、RTL、ScrollView+RecyclerView 等）</li>
+          <li class="new">多文件导航（DefinitionProvider、DocumentLinkProvider、CodeLensProvider）</li>
+          <li class="new">Material 3 主题增强（种子色动态调色板生成）</li>
+          <li class="new">响应式多屏预览（2x2 设备网格同步渲染）</li>
+        </ul>
+        <div class="version-links"><a href="v2.12.0/CHANGELOG.md" class="version-link" target="_blank">更新日志</a></div>
+      </div>
+      <div class="version-item">
+        <div class="version-header"><div style="display:flex;align-items:center;gap:10px;"><span class="version-tag">v2.11.0</span></div><span class="version-date">2026-06-04</span></div>
+        <ul class="version-changes">
+          <li class="new">代码片段与模板（8 个常用布局模板）</li>
+          <li class="new">导出为图片（SVG foreignObject + Canvas）</li>
+          <li class="new">无障碍检查（contentDescription、触摸目标、hint/labelFor、liveRegion）</li>
+        </ul>
+        <div class="version-links"><a href="v2.11.0/CHANGELOG.md" class="version-link" target="_blank">更新日志</a></div>
+      </div>
+      <div class="version-item">
+        <div class="version-header"><div style="display:flex;align-items:center;gap:10px;"><span class="version-tag">v2.10.0</span></div><span class="version-date">2026-06-04</span></div>
+        <ul class="version-changes">
+          <li class="new">Custom Editor API（WorkspaceEdit 原生撤销/重做）</li>
+          <li class="new">XML 验证与属性自动补全</li>
+          <li class="new">资源拖放（图片/布局文件直接拖入编辑器）</li>
+          <li class="new">布局边界可视化、Layout Inspector</li>
+        </ul>
+        <div class="version-links"><a href="v2.10.0/CHANGELOG.md" class="version-link" target="_blank">更新日志</a></div>
+      </div>
+      <div class="version-item">
+        <div class="version-header"><div style="display:flex;align-items:center;gap:10px;"><span class="version-tag">v2.9.0</span></div><span class="version-date">2026-06-04</span></div>
         <ul class="version-changes">
           <li class="new">VS Code 插件版本发布</li>
           <li class="new">支持 Custom Editor API，双击 XML 打开可视化编辑器</li>
@@ -226,14 +265,6 @@
       item.style.transitionDelay = `${i * 0.08}s`;
       item.style.transition = `opacity 0.5s ease ${i * 0.08}s, transform 0.5s ease ${i * 0.08}s`;
       observer.observe(item);
-    });
-    document.querySelectorAll('.feature').forEach((item, i) => {
-      item.style.opacity = '0'; item.style.transform = 'translateY(20px)';
-      item.style.transition = `opacity 0.5s ease ${i * 0.1}s, transform 0.5s ease ${i * 0.1}s`;
-      const fObs = new IntersectionObserver((entries) => {
-        entries.forEach(entry => { if (entry.isIntersecting) { entry.target.style.opacity='1'; entry.target.style.transform='translateY(0)'; fObs.unobserve(entry.target); } });
-      }, { threshold: 0.1 });
-      fObs.observe(item);
     });
   </script>
 </body>
