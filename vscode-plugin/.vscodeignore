@@ -1,0 +1,6 @@
+.vscodeignore
+build-vsix.sh
+releases/
+node_modules/
+.gitignore
+*.vsix

@@ -1,1 +1,5 @@
 .edgeone/
+node_modules/
+# 忽略根目录和临时位置的 .vsix，但保留 releases/ 下的
+/*.vsix
+**/node_modules/*.vsix
