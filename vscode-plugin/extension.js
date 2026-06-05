@@ -1,4 +1,4 @@
-const XAP='xmlns:app="http://schemas.android.com/apk/res-auto"';const ALE='androidLayoutEditor';const vscode=require('vscode'),path=require('path'),fs=require('fs');
+const XAP='xmlns:app="http://schemas.android.com/apk/res-auto"';const ALE='androidLayoutEditor';const vscode=require('vscode'),path=require('path'),fs=require('fs');const vs=vscode;
 const AA={layout_width:{t:'e',v:["match_parent","wrap_content","100dp","200dp"]},layout_height:{t:'e',v:["match_parent","wrap_content","100dp","200dp"]},layout_margin:{t:'d'},layout_marginTop:{t:'d'},layout_marginBottom:{t:'d'},layout_marginLeft:{t:'d'},layout_marginRight:{t:'d'},layout_marginStart:{t:'d'},layout_marginEnd:{t:'d'},layout_padding:{t:'d'},layout_weight:{t:'f'},layout_gravity:{t:'e',v:["top","bottom","left","right","center","center_vertical","center_horizontal","start","end"]},id:{t:'i'},background:{t:'cr'},padding:{t:'d'},paddingTop:{t:'d'},paddingBottom:{t:'d'},paddingLeft:{t:'d'},paddingRight:{t:'d'},visibility:{t:'e',v:["visible","invisible","gone"]},alpha:{t:'f'},elevation:{t:'d'},rotation:{t:'f'},scaleX:{t:'f'},scaleY:{t:'f'},text:{t:'s'},textSize:{t:'d'},textColor:{t:'c'},hint:{t:'s'},textColorHint:{t:'c'},textAlignment:{t:'e',v:["inherit","gravity","center","textStart","textEnd","viewStart","viewEnd"]},maxLines:{t:'n'},singleLine:{t:'b'},ellipsize:{t:'e',v:["start","middle","end","marquee"]},textStyle:{t:'e',v:["normal","bold","italic","bold|italic"]},clickable:{t:'b'},enabled:{t:'b'},inputType:{t:'e',v:["text","textPassword","number","phone","textEmailAddress","textUri","textMultiLine","numberPassword","numberSigned","numberDecimal"]},imeOptions:{t:'e',v:["actionDone","actionGo","actionNext","actionSearch","actionSend","actionNone","flagNoExtractUi"]},src:{t:'r'},scaleType:{t:'e',v:["center","centerCrop","centerInside","fitCenter","fitXY","fitStart","fitEnd","matrix"]},contentDescription:{t:'s'},checked:{t:'b'},orientation:{t:'e',v:["vertical","horizontal"]},gravity:{t:'e',v:["top","bottom","left","right","center","center_vertical","center_horizontal","start","end","clip_vertical","clip_horizontal"]},layout_constraintLeft_toLeftOf:{t:'i'},layout_constraintLeft_toRightOf:{t:'i'},layout_constraintRight_toLeftOf:{t:'i'},layout_constraintRight_toRightOf:{t:'i'},layout_constraintTop_toTopOf:{t:'i'},layout_constraintTop_toBottomOf:{t:'i'},layout_constraintBottom_toTopOf:{t:'i'},layout_constraintBottom_toBottomOf:{t:'i'},layout_constraintStart_toStartOf:{t:'i'},layout_constraintStart_toEndOf:{t:'i'},layout_constraintEnd_toStartOf:{t:'i'},layout_constraintEnd_toEndOf:{t:'i'},layout_constraintBaseline_toBaselineOf:{t:'i'},layout_constraintHorizontal_bias:{t:'f'},layout_constraintVertical_bias:{t:'f'},layout_constraintHorizontal_chainStyle:{t:'e',v:["spread","spread_inside","packed"]},layout_constraintVertical_chainStyle:{t:'e',v:["spread","spread_inside","packed"]},layout_constraintWidth_percent:{t:'f'},layout_constraintHeight_percent:{t:'f'},layout_constraintDimensionRatio:{t:'s'}};
 const DP={'pixel-7':{n:'Pixel 7',w:1080,h:2400,dn:'xxhdpi',sc:3},'pixel-7a':{n:'Pixel 7a',w:1080,h:2400,dn:'xxhdpi',sc:3},'galaxy-s23':{n:'Galaxy S23',w:1080,h:2340,dn:'xxhdpi',sc:3},'galaxy-s23-ultra':{n:'Galaxy S23 Ultra',w:1440,h:3088,dn:'xxxhdpi',sc:4},'iphone-15':{n:'iPhone 15',w:1179,h:2556,dn:'xxxhdpi',sc:3},'ipad-air':{n:'iPad Air',w:1640,h:2360,dn:'xhdpi',sc:2},'small-phone':{n:'Small Phone',w:720,h:1280,dn:'hdpi',sc:2},'tablet-10':{n:'10" Tablet',w:1280,h:800,dn:'mdpi',sc:1}};
 const DS={ldpi:0.75,mdpi:1,hdpi:1.5,xhdpi:2,xxhdpi:3,xxxhdpi:4};
@@ -74,17 +74,17 @@ function _replaceSel(doc,text){const ed=vs.window.activeTextEditor;if(!ed)return
 function activate(ctx){
 const dc=vs.languages.createDiagnosticCollection(ALE);ctx.subscriptions.push(dc);
 const val=new XV(dc);
-const prov=new EP(ctx);prov.setV(val);
-ctx.subscriptions.push(vs.window.registerCustomEditorProvider(ALE+'.layoutEditor',prov,{supportsMultipleEditorsPerDocument:false,webviewOptions:{retainContextWhenHidden:true}}));
+try{const prov=new EP(ctx);prov.setV(val);
+ctx.subscriptions.push(vs.window.registerCustomEditorProvider(ALE+'.layoutEditor',prov,{supportsMultipleEditorsPerDocument:false,webviewOptions:{retainContextWhenHidden:true}}));}catch(e){console.error('LayoutEditor: CustomEditorProvider注册失败',e);}
 ctx.subscriptions.push(vs.workspace.onDidOpenTextDocument(d=>{if(d.uri.scheme==='file'&&d.uri.path.endsWith('.xml'))val.validate(d);}));
 let vt;ctx.subscriptions.push(vs.workspace.onDidChangeTextDocument(e=>{if(e.document.uri.scheme==='file'&&e.document.uri.path.endsWith('.xml')){clearTimeout(vt);vt=setTimeout(()=>val.validate(e.document),500);}}));
-const cp=new CP();ctx.subscriptions.push(vs.languages.registerCompletionItemProvider({scheme:'file',pattern:'**/res/layout/**/*.xml'},cp,'<','L','l'));
+try{const cp=new CP();ctx.subscriptions.push(vs.languages.registerCompletionItemProvider({scheme:'file',pattern:'**/res/layout/**/*.xml'},cp,'<','L','l'));
 ctx.subscriptions.push(vs.languages.registerDefinitionProvider({scheme:'file',pattern:'**/res/layout/**/*.xml'},new DPv()));
 ctx.subscriptions.push(vs.languages.registerDocumentLinkProvider({scheme:'file',pattern:'**/res/layout/**/*.xml'},new DLP()));
 ctx.subscriptions.push(vs.languages.registerCodeLensProvider({scheme:'file',pattern:'**/res/layout/**/*.xml'},new CLP()));
 ctx.subscriptions.push(vs.languages.registerDocumentFormattingEditProvider({scheme:'file',pattern:'**/res/layout/**/*.xml'},new FmtProvider()));
 ctx.subscriptions.push(vs.languages.registerCompletionItemProvider({scheme:'file',pattern:'**/res/layout/**/*.xml'},new RsrcProvider(),'/'));
-ctx.subscriptions.push(vs.languages.registerHoverProvider({scheme:'file',pattern:'**/res/layout/**/*.xml'},new HoverProvider()));
+ctx.subscriptions.push(vs.languages.registerHoverProvider({scheme:'file',pattern:'**/res/layout/**/*.xml'},new HoverProvider()));}catch(e){console.error('LayoutEditor: LanguageProvider注册失败',e);}
 ctx.subscriptions.push(vs.commands.registerCommand('androidLayoutEditor.open',async u=>{if(!u){const ed=vs.window.activeTextEditor;if(ed)u=ed.document.uri;else{vs.window.showWarningMessage('请先打开XML文件');return;}}await vs.window.showTextDocument(u,{viewColumn:vs.ViewColumn.One,preview:false});}));
 ctx.subscriptions.push(vs.commands.registerCommand('androidLayoutEditor.openSidebar',async()=>{
 const p=vs.window.createWebviewPanel('androidLayoutEditorSidebar','Android Layout Editor',{viewColumn:vs.ViewColumn.Beside,preserveFocus:true},{enableScripts:true,retainContextWhenHidden:true,localResourceRoots:[vs.Uri.file(path.join(ctx.extensionPath,'media'))]});
@@ -123,6 +123,22 @@ ctx.subscriptions.push(vs.commands.registerCommand('androidLayoutEditor.wrapWith
 ctx.subscriptions.push(vs.commands.registerCommand('androidLayoutEditor.unwrapLayout',async()=>{const ed=vs.window.activeTextEditor;if(!ed)return;const sel=_getSel(ed.document);if(!sel){vs.window.showWarningMessage('请先选中要解包的布局');return;}const inner=sel.replace(/<\w+[^>]*>\s*/,'').replace(/\s*<\/\w+>\s*$/,'');_replaceSel(ed.document,inner);vs.window.showInformationMessage('已解包布局');}));
 ctx.subscriptions.push(vs.commands.registerCommand('androidLayoutEditor.showPerformancePanel',async()=>{const ed=vs.window.activeTextEditor;if(!ed||!ed.document.uri.path.endsWith('.xml')){vs.window.showWarningMessage('请先打开布局XML文件');return;}const xml=ed.document.getText();const p=vs.window.createWebviewPanel('androidPerfPanel','性能分析',{viewColumn:vs.ViewColumn.Beside,preserveFocus:true},{enableScripts:true});p.webview.html=_perfHtml(xml);}));
 ctx.subscriptions.push(vs.languages.registerDocumentDropEditProvider({scheme:'file',pattern:'**/*.xml'},{async provideDocumentDropEdits(){return null;}},{dropMimeTypes:['text/uri-list','application/vnd.code.tree.fileDragAndDrop']}));
+ctx.subscriptions.push(vs.commands.registerCommand('androidLayoutEditor.convertH5ToXml',async()=>{
+const ed=vs.window.activeTextEditor;if(!ed){vs.window.showWarningMessage('请先打开HTML文件');return;}
+const doc=ed.document;if(!doc.uri.path.endsWith('.html')&&!doc.uri.path.endsWith('.htm')){vs.window.showWarningMessage('仅支持HTML文件');return;}
+const html=doc.getText();
+vs.window.withProgress({location:vs.ProgressLocation.Notification,title:'正在转换 H5 → Android XML...'},async()=>{
+try{const h5Converter=require('./h5-converter');const xml=h5Converter.convert(html);
+const wf=vs.workspace.workspaceFolders;if(!wf){vs.window.showErrorMessage('请先打开工作区');return;}
+const baseName=path.basename(doc.uri.fsPath,path.extname(doc.uri.fsPath));
+const layoutName=baseName.replace(/[^a-zA-Z0-9_]/g,'_').toLowerCase();
+const ld=vs.Uri.joinPath(wf[0].uri,'res','layout');
+const fu=vs.Uri.joinPath(ld,layoutName+'.xml');
+try{await vscode.workspace.fs.createDirectory(ld);}catch(e){}
+await vscode.workspace.fs.writeFile(fu,new TextEncoder().encode(xml));
+await vs.commands.executeCommand('vscode.openWith',fu,ALE+'.layoutEditor');
+vs.window.showInformationMessage(`H5 转换完成: res/layout/${layoutName}.xml`);}catch(e){vs.window.showErrorMessage('转换失败: '+e.message);}});
+}));
 ctx.subscriptions.push(vs.workspace.onDidChangeConfiguration(e=>{if(e.affectsConfiguration(ALE)){}}));
 }
 function deactivate(){}

@@ -1,5 +1,32 @@
 # Changelog - Android XML Layout Editor
 
+## v2.14.0
+
+### Feature: H5 to Android XML Converter
+- **Convert H5 (HTML/CSS) to Android XML Layout** (`convertH5ToXml` command):
+  - Parse complete HTML pages (including `<head>`, `<style>`, `<body>`)
+  - Map HTML tags to Android components:
+    - `div/section/article` → `LinearLayout`
+    - `span/p/h1-h6` → `TextView`
+    - `input` → `EditText` (with type mapping: password/email/number/phone/url)
+    - `button` → `Button`
+    - `img` → `ImageView`
+    - `select` → `Spinner`
+    - `ul/ol/li` → `LinearLayout` (list structure)
+  - Map CSS properties to Android attributes:
+    - `width/height` → `layout_width/layout_height` (supports px, %, vw, vh, rem)
+    - `margin/padding` → `layout_margin/padding` (all directions)
+    - `color` → `textColor`
+    - `font-size` → `textSize` (px → sp conversion)
+    - `font-weight` → `textStyle`
+    - `background/background-color` → `background`
+    - `display:none` → `visibility="gone"`
+  - Support inline `style` attributes and `<style>` tag CSS rules
+  - Support `id` → `@+id/`, `placeholder` → `hint`, `src` → `@drawable/`
+  - Generate valid Android XML with proper `LinearLayout` root wrapper
+- **Command**: `Ctrl+Shift+P` → "Android Layout Editor: Convert H5 to Android XML" (available when HTML file is open)
+- **Output**: Creates `res/layout/{filename}.xml` and opens in Layout Editor
+
 ## v2.13.0
 
 ### Feature 1: XML Formatting & Refactoring

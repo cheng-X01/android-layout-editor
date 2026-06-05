@@ -1,8 +1,8 @@
 {
   "name": "android-layout-editor",
   "displayName": "Android XML Layout Editor",
-  "description": "Visual editor for Android XML layouts with drag-and-drop design, XML validation, lint & best practices, multi-file navigation, Material 3 theme, responsive multi-screen preview, attribute completion, resource drag-drop, layout bounds visualization, device preview, Layout Inspector, code snippets & templates, export to image, accessibility checker, XML formatting & refactoring, layout health analysis, overdraw detection, layout statistics, color/dimension resource browser, and resource reference navigation",
-  "version": "2.13.0",
+  "description": "Visual editor for Android XML layouts with drag-and-drop design, XML validation, lint & best practices, multi-file navigation, Material 3 theme, responsive multi-screen preview, attribute completion, resource drag-drop, layout bounds visualization, device preview, Layout Inspector, code snippets & templates, export to image, accessibility checker, XML formatting & refactoring, layout health analysis, overdraw detection, layout statistics, color/dimension resource browser, resource reference navigation, and H5 to Android XML conversion",
+  "version": "2.14.0",
   "publisher": "cheng-x01",
   "engines": {
     "vscode": "^1.74.0"
@@ -47,6 +47,7 @@
     "onCommand:androidLayoutEditor.extractStyle",
     "onCommand:androidLayoutEditor.convertLayout",
     "onCommand:androidLayoutEditor.flattenLayout",
+    "onCommand:androidLayoutEditor.convertH5ToXml",
     "onCustomEditor:androidLayoutEditor.layoutEditor"
   ],
   "main": "./extension.js",
@@ -111,6 +112,12 @@
         "title": "Flatten Unnecessary Nesting",
         "category": "Android Layout Editor",
         "icon": "$(flatten)"
+      },
+      {
+        "command": "androidLayoutEditor.convertH5ToXml",
+        "title": "Convert H5 to Android XML",
+        "category": "Android Layout Editor",
+        "icon": "$(file-code)"
       }
     ],
     "menus": {
@@ -190,6 +197,10 @@
         {
           "command": "androidLayoutEditor.flattenLayout",
           "when": "resourceExtname == .xml"
+        },
+        {
+          "command": "androidLayoutEditor.convertH5ToXml",
+          "when": "resourceExtname == .html || resourceExtname == .htm"
         }
       ]
     },
