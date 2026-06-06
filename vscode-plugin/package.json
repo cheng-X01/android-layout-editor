@@ -44,10 +44,14 @@
     "onCommand:androidLayoutEditor.showInspector",
     "onCommand:androidLayoutEditor.openCode",
     "onCommand:androidLayoutEditor.exportImage",
-    "onCommand:androidLayoutEditor.extractStyle",
-    "onCommand:androidLayoutEditor.convertLayout",
     "onCommand:androidLayoutEditor.flattenLayout",
     "onCommand:androidLayoutEditor.convertH5ToXml",
+    "onCommand:androidLayoutEditor.formatDocument",
+    "onCommand:androidLayoutEditor.extractToString",
+    "onCommand:androidLayoutEditor.extractToDimen",
+    "onCommand:androidLayoutEditor.wrapWithLayout",
+    "onCommand:androidLayoutEditor.unwrapLayout",
+    "onCommand:androidLayoutEditor.showPerformancePanel",
     "onCustomEditor:androidLayoutEditor.layoutEditor"
   ],
   "main": "./extension.js",
@@ -96,18 +100,6 @@
         "icon": "$(camera)"
       },
       {
-        "command": "androidLayoutEditor.extractStyle",
-        "title": "Extract Style from Selection",
-        "category": "Android Layout Editor",
-        "icon": "$(symbol-color)"
-      },
-      {
-        "command": "androidLayoutEditor.convertLayout",
-        "title": "Convert Layout Type",
-        "category": "Android Layout Editor",
-        "icon": "$(move)"
-      },
-      {
         "command": "androidLayoutEditor.flattenLayout",
         "title": "Flatten Unnecessary Nesting",
         "category": "Android Layout Editor",
@@ -118,6 +110,47 @@
         "title": "Convert H5 to Android XML",
         "category": "Android Layout Editor",
         "icon": "$(file-code)"
+      },
+      {
+        "command": "androidLayoutEditor.formatDocument",
+        "title": "Format XML Document",
+        "category": "Android Layout Editor",
+        "icon": "$(symbol-ruler)"
+      },
+      {
+        "command": "androidLayoutEditor.extractToString",
+        "title": "Extract to @string Resource",
+        "category": "Android Layout Editor",
+        "icon": "$(symbol-string)"
+      },
+      {
+        "command": "androidLayoutEditor.extractToDimen",
+        "title": "Extract to @dimen Resource",
+        "category": "Android Layout Editor",
+        "icon": "$(symbol-numeric)"
+      },
+      {
+        "command": "androidLayoutEditor.wrapWithLayout",
+        "title": "Wrap with Layout",
+        "category": "Android Layout Editor",
+        "icon": "$(selection)"
+      },
+      {
+        "command": "androidLayoutEditor.unwrapLayout",
+        "title": "Unwrap Layout",
+        "category": "Android Layout Editor",
+        "icon": "$(selection)"
+      },
+      {
+        "command": "androidLayoutEditor.showPerformancePanel",
+        "title": "Show Performance Analysis",
+        "category": "Android Layout Editor",
+        "icon": "$(graph)"
+      },
+      {
+        "command": "androidLayoutEditor.openCodeLensTarget",
+        "title": "Go to Activity",
+        "category": "Android Layout Editor"
       }
     ],
     "menus": {
@@ -187,20 +220,36 @@
           "when": "activeEditor == androidLayoutEditor.layoutEditor"
         },
         {
-          "command": "androidLayoutEditor.extractStyle",
-          "when": "resourceExtname == .xml"
-        },
-        {
-          "command": "androidLayoutEditor.convertLayout",
-          "when": "resourceExtname == .xml"
-        },
-        {
           "command": "androidLayoutEditor.flattenLayout",
           "when": "resourceExtname == .xml"
         },
         {
           "command": "androidLayoutEditor.convertH5ToXml",
           "when": "resourceExtname == .html || resourceExtname == .htm"
+        },
+        {
+          "command": "androidLayoutEditor.formatDocument",
+          "when": "resourceExtname == .xml"
+        },
+        {
+          "command": "androidLayoutEditor.extractToString",
+          "when": "resourceExtname == .xml"
+        },
+        {
+          "command": "androidLayoutEditor.extractToDimen",
+          "when": "resourceExtname == .xml"
+        },
+        {
+          "command": "androidLayoutEditor.wrapWithLayout",
+          "when": "resourceExtname == .xml"
+        },
+        {
+          "command": "androidLayoutEditor.unwrapLayout",
+          "when": "resourceExtname == .xml"
+        },
+        {
+          "command": "androidLayoutEditor.showPerformancePanel",
+          "when": "resourceExtname == .xml"
         }
       ]
     },
@@ -265,6 +314,18 @@
           "enum": ["light", "dark", "material_you"],
           "description": "Android app theme for preview (Light/Dark/Material You)",
           "order": 7
+        },
+        "androidLayoutEditor.m3SeedColor": {
+          "type": "string",
+          "default": "#6750A4",
+          "description": "Material 3 seed color for theme generation",
+          "order": 8
+        },
+        "androidLayoutEditor.multiPreview": {
+          "type": "boolean",
+          "default": false,
+          "description": "Show multi-device preview side by side",
+          "order": 9
         }
       }
     },
