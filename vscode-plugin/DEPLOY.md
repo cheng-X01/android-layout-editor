@@ -99,6 +99,20 @@ npx vsce publish
 | `Ctrl+Shift+X` | 切换布局边界显示 |
 | `Ctrl+Shift+I` | 切换 Layout Inspector |
 | `Shift+Alt+F` | 格式化 XML |
+| `Ctrl+Shift+F` | 格式化 XML 文档（自定义） |
+| `Ctrl+Shift+H` | H5 转 Android XML |
+| `Ctrl+Shift+P` | 显示性能分析面板 |
+| `Ctrl+Shift+W` | 包裹为布局 |
+| `Ctrl+Shift+U` | 解包布局 |
+
+## 故障排查
+
+| 问题 | 解决方案 |
+|------|----------|
+| 扩展无法激活 | 检查 VS Code 版本 >= 1.74.0 |
+| 命令未找到 | 重新加载窗口 (`Ctrl+Shift+P` → `Developer: Reload Window`) |
+| Webview 空白 | 检查开发者工具控制台错误 |
+| H5 转换失败 | 确保打开的是 `.html` 文件 |
 
 ## 配置项
 
@@ -111,6 +125,10 @@ npx vsce publish
 | `androidLayoutEditor.devicePreset` | string | pixel-7 | 设备预设 |
 | `androidLayoutEditor.density` | string | xxhdpi | 屏幕密度 |
 | `androidLayoutEditor.appTheme` | string | light | 应用主题 |
+
+## 更新日志
+
+详细更新记录请查看 [CHANGELOG.md](CHANGELOG.md)。
 
 ## 版本历史
 

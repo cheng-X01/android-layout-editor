@@ -2,7 +2,7 @@
   "name": "android-layout-editor",
   "displayName": "Android XML Layout Editor",
   "description": "Visual editor for Android XML layouts with drag-and-drop design, XML validation, lint & best practices, multi-file navigation, Material 3 theme, responsive multi-screen preview, attribute completion, resource drag-drop, layout bounds visualization, device preview, Layout Inspector, code snippets & templates, export to image, accessibility checker, XML formatting & refactoring, layout health analysis, overdraw detection, layout statistics, color/dimension resource browser, resource reference navigation, and H5 to Android XML conversion",
-  "version": "2.14.0",
+  "version": "2.14.1",
   "publisher": "cheng-x01",
   "engines": {
     "vscode": "^1.74.0"
@@ -346,6 +346,38 @@
       }
     ]
   },
+  "keybindings": [
+    {
+      "command": "androidLayoutEditor.formatDocument",
+      "key": "ctrl+shift+f",
+      "mac": "cmd+shift+f",
+      "when": "editorLangId == xml && resourceExtname == .xml"
+    },
+    {
+      "command": "androidLayoutEditor.convertH5ToXml",
+      "key": "ctrl+shift+h",
+      "mac": "cmd+shift+h",
+      "when": "editorLangId == html"
+    },
+    {
+      "command": "androidLayoutEditor.showPerformancePanel",
+      "key": "ctrl+shift+p",
+      "mac": "cmd+shift+p",
+      "when": "editorLangId == xml && resourceExtname == .xml"
+    },
+    {
+      "command": "androidLayoutEditor.wrapWithLayout",
+      "key": "ctrl+shift+w",
+      "mac": "cmd+shift+w",
+      "when": "editorLangId == xml && resourceExtname == .xml"
+    },
+    {
+      "command": "androidLayoutEditor.unwrapLayout",
+      "key": "ctrl+shift+u",
+      "mac": "cmd+shift+u",
+      "when": "editorLangId == xml && resourceExtname == .xml"
+    }
+  ],
   "scripts": {
     "package": "vsce package",
     "publish": "vsce publish"
