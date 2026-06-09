@@ -2,7 +2,7 @@
   "name": "android-layout-editor",
   "displayName": "Android XML Layout Editor",
   "description": "Visual editor for Android XML layouts with drag-and-drop design, XML validation, lint & best practices, multi-file navigation, Material 3 theme, responsive multi-screen preview, attribute completion, resource drag-drop, layout bounds visualization, device preview, Layout Inspector, code snippets & templates, export to image, accessibility checker, XML formatting & refactoring, layout health analysis, overdraw detection, layout statistics, color/dimension resource browser, resource reference navigation, and H5 to Android XML conversion",
-  "version": "2.14.1",
+  "version": "2.14.2",
   "publisher": "cheng-x01",
   "engines": {
     "vscode": "^1.74.0"
