@@ -1,0 +1,3667 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Android XML 布局可视化编辑器 v2.5.2</title>
+<style>
+  :root {
+    --bg-primary: #1a1a2e;
+    --bg-secondary: #16213e;
+    --bg-tertiary: #0f3460;
+    --bg-surface: #1e1e3a;
+    --bg-hover: #2a2a4a;
+    --bg-active: #3a3a6a;
+    --accent: #00d4aa;
+    --accent-dim: #00a88a;
+    --accent-glow: rgba(0, 212, 170, 0.15);
+    --text-primary: #e8e8f0;
+    --text-secondary: #a0a0c0;
+    --text-muted: #6a6a8a;
+    --border: #2a2a4a;
+    --border-active: #00d4aa;
+    --danger: #ff6b6b;
+    --warning: #ffd93d;
+    --success: #6bcb77;
+    --component-text: #4fc3f7;
+    --component-button: #81c784;
+    --component-image: #ffb74d;
+    --component-input: #ba68c8;
+    --component-layout: #4dd0e1;
+    --component-list: #f06292;
+    --component-scroll: #aed581;
+    --shadow: 0 2px 8px rgba(0,0,0,0.3);
+    --shadow-lg: 0 4px 20px rgba(0,0,0,0.4);
+    --radius: 6px;
+    --radius-sm: 4px;
+    --transition: 0.2s ease;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    height: 100vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* === 顶部工具栏 === */
+  .toolbar {
+    height: 48px;
+    background: var(--bg-secondary);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    padding: 0 16px;
+    gap: 8px;
+    flex-shrink: 0;
+    z-index: 100;
+  }
+
+  .toolbar-brand {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--accent);
+    margin-right: 16px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    letter-spacing: -0.3px;
+  }
+
+  .toolbar-brand svg { width: 18px; height: 18px; }
+
+  .toolbar-divider {
+    width: 1px;
+    height: 24px;
+    background: var(--border);
+    margin: 0 8px;
+  }
+
+  .toolbar-btn {
+    padding: 6px 12px;
+    background: transparent;
+    border: 1px solid transparent;
+    color: var(--text-secondary);
+    font-size: 12px;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    transition: all var(--transition);
+    white-space: nowrap;
+  }
+
+  .toolbar-btn:hover {
+    background: var(--bg-hover);
+    color: var(--text-primary);
+    border-color: var(--border);
+  }
+
+  .toolbar-btn.active {
+    background: var(--accent-glow);
+    color: var(--accent);
+    border-color: var(--accent);
+  }
+
+  .toolbar-btn svg { width: 14px; height: 14px; }
+
+  .toolbar-spacer { flex: 1; }
+
+  .toolbar-zoom {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    color: var(--text-secondary);
+    font-size: 12px;
+  }
+
+  .toolbar-zoom input {
+    width: 48px;
+    background: var(--bg-primary);
+    border: 1px solid var(--border);
+    color: var(--text-primary);
+    text-align: center;
+    padding: 2px 4px;
+    border-radius: var(--radius-sm);
+    font-size: 11px;
+  }
+
+  /* === 主体三栏布局 === */
+  .main-container {
+    flex: 1;
+    display: flex;
+    overflow: hidden;
+  }
+
+  /* === 画布浮动工具栏 === */
+  .canvas-toolbar {
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 4px;
+    z-index: 50;
+    box-shadow: var(--shadow);
+    max-width: calc(100% - 16px);
+    flex-wrap: wrap;
+  }
+
+  .canvas-toolbar .toolbar-btn {
+    padding: 5px 6px;
+    font-size: 11px;
+    gap: 3px;
+    border-radius: var(--radius-sm);
+    white-space: nowrap;
+  }
+
+  .canvas-toolbar .toolbar-btn svg {
+    width: 14px;
+    height: 14px;
+  }
+
+  .canvas-toolbar-sep {
+    width: 1px;
+    height: 20px;
+    background: var(--border);
+    margin: 0 2px;
+  }
+
+  .canvas-toolbar .zoom-group {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+  }
+
+  .canvas-toolbar .zoom-group input {
+    width: 44px;
+    background: var(--bg-primary);
+    border: 1px solid var(--border);
+    color: var(--text-primary);
+    text-align: center;
+    padding: 3px 4px;
+    border-radius: var(--radius-sm);
+    font-size: 11px;
+  }
+
+  /* 比例下拉选择 */
+  .canvas-toolbar .ratio-select {
+    background: var(--bg-primary);
+    border: 1px solid var(--border);
+    color: var(--text-primary);
+    padding: 3px 6px;
+    border-radius: var(--radius-sm);
+    font-size: 11px;
+    cursor: pointer;
+    outline: none;
+  }
+
+  .canvas-toolbar .ratio-select:hover {
+    border-color: var(--accent);
+  }
+
+  /* 打开文件隐藏input */
+  #fileInput { display: none; }
+
+  /* === 左侧组件面板 === */
+  .panel-left {
+    width: 240px;
+    background: var(--bg-secondary);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+    overflow: hidden;
+    transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1), min-width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+  }
+
+  .panel-left.collapsed {
+    width: 0;
+    min-width: 0;
+    border-right: none;
+  }
+
+  .panel-left.collapsed > * { display: none; }
+
+  .panel-header {
+    padding: 10px 14px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: var(--text-muted);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+    user-select: none;
+    transition: background var(--transition);
+  }
+
+  .panel-header:hover {
+    background: var(--bg-hover);
+  }
+
+  .panel-header .section-arrow {
+    font-size: 10px;
+    transition: transform 0.2s ease;
+    flex-shrink: 0;
+  }
+
+  .panel-header.section-collapsed .section-arrow {
+    transform: rotate(-90deg);
+  }
+
+  .panel-section {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .panel-section.collapsed .panel-search,
+  .panel-section.collapsed .component-list,
+  .panel-section.collapsed .tree-container,
+  .panel-section.collapsed .props-empty,
+  .panel-section.collapsed .props-content {
+    display: none;
+  }
+
+  .panel-section.collapsed .section-arrow {
+    transform: rotate(-90deg);
+  }
+
+  .tree-section {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .tree-section .tree-container {
+    flex: 1;
+    overflow-y: auto;
+  }
+
+  .tree-container::-webkit-scrollbar { width: 4px; }
+  .tree-container::-webkit-scrollbar-track { background: transparent; }
+  .tree-container::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+  .panel-search {
+    padding: 8px 10px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .panel-search input {
+    width: 100%;
+    background: var(--bg-primary);
+    border: 1px solid var(--border);
+    color: var(--text-primary);
+    padding: 6px 10px;
+    border-radius: var(--radius-sm);
+    font-size: 12px;
+    outline: none;
+    transition: border-color var(--transition);
+  }
+
+  .panel-search input:focus { border-color: var(--accent); }
+  .panel-search input::placeholder { color: var(--text-muted); }
+
+  .component-list {
+    overflow-y: auto;
+    padding: 6px;
+    max-height: 300px;
+  }
+
+  .component-list::-webkit-scrollbar { width: 4px; }
+  .component-list::-webkit-scrollbar-track { background: transparent; }
+  .component-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+  .component-group-title {
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    color: var(--text-muted);
+    padding: 8px 8px 4px;
+    cursor: pointer;
+    user-select: none;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    transition: color var(--transition);
+  }
+
+  .component-group-title:hover {
+    color: var(--text-secondary);
+  }
+
+  .component-group-title .group-arrow {
+    font-size: 8px;
+    transition: transform 0.2s ease;
+  }
+
+  .component-group-title.group-collapsed .group-arrow {
+    transform: rotate(-90deg);
+  }
+
+  .component-group-items.hidden {
+    display: none;
+  }
+
+  .component-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 10px;
+    border-radius: var(--radius-sm);
+    cursor: grab;
+    transition: all var(--transition);
+    font-size: 12px;
+    color: var(--text-secondary);
+    user-select: none;
+  }
+
+  .component-item:hover {
+    background: var(--bg-hover);
+    color: var(--text-primary);
+  }
+
+  .component-item:active { cursor: grabbing; }
+
+  .component-item .icon {
+    width: 28px;
+    height: 28px;
+    border-radius: var(--radius-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    flex-shrink: 0;
+  }
+
+  .component-item .label { flex: 1; }
+  .component-item .tag {
+    font-size: 9px;
+    color: var(--text-muted);
+    background: var(--bg-primary);
+    padding: 1px 5px;
+    border-radius: 3px;
+  }
+
+  /* === 中间编辑区 === */
+  .panel-center {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    background: var(--bg-primary);
+  }
+
+  .center-tabs {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg-secondary);
+    border-bottom: 1px solid var(--border);
+    padding: 0 12px;
+    height: 36px;
+    flex-shrink: 0;
+    gap: 0;
+  }
+
+  .center-tabs .tab-spacer {
+    flex: 1;
+  }
+
+  .tab-panel-toggle {
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: var(--text-muted);
+    border-radius: var(--radius-sm);
+    transition: all var(--transition);
+    flex-shrink: 0;
+  }
+
+  .tab-panel-toggle:hover {
+    background: var(--bg-hover);
+    color: var(--accent);
+  }
+
+  .tab-panel-toggle svg {
+    width: 14px;
+    height: 14px;
+  }
+
+  .center-tab {
+    padding: 6px 16px;
+    font-size: 12px;
+    color: var(--text-muted);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: all var(--transition);
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+
+  .center-tab:hover { color: var(--text-secondary); }
+  .center-tab.active {
+    color: var(--accent);
+    border-bottom-color: var(--accent);
+  }
+
+  .center-tab svg { width: 13px; height: 13px; }
+
+  /* 画布区域 */
+  .canvas-container {
+    flex: 1;
+    overflow: auto;
+    padding: 30px;
+    background-color: var(--bg-primary);
+    background-image:
+      linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
+    background-size: 20px 20px;
+    position: relative;
+  }
+
+  .canvas-container::-webkit-scrollbar { width: 6px; height: 6px; }
+  .canvas-container::-webkit-scrollbar-track { background: transparent; }
+  .canvas-container::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+  .phone-frame {
+    width: 360px;
+    min-height: 640px;
+    background: #ffffff;
+    border-radius: 24px;
+    box-shadow: var(--shadow-lg), 0 0 0 2px var(--border);
+    overflow: hidden;
+    position: absolute;
+    flex-shrink: 0;
+    cursor: grab;
+    transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1), min-height 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    user-select: none;
+  }
+
+  .phone-frame:active {
+    cursor: grabbing;
+  }
+
+  .phone-frame.dragging {
+    cursor: grabbing;
+    box-shadow: var(--shadow-lg), 0 0 0 2px var(--accent), 0 0 20px rgba(0, 212, 170, 0.2);
+  }
+
+  .frame-coords {
+    position: absolute;
+    top: -24px;
+    left: 0;
+    font-size: 10px;
+    color: var(--accent);
+    background: var(--bg-tertiary);
+    padding: 2px 8px;
+    border-radius: 4px;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+    white-space: nowrap;
+    font-family: monospace;
+  }
+
+  .phone-frame.dragging .frame-coords,
+  .phone-frame:hover .frame-coords {
+    opacity: 1;
+  }
+
+  .phone-frame.landscape {
+    width: 640px;
+    height: 360px;
+    min-height: 360px;
+  }
+
+  .phone-status-bar {
+    height: 24px;
+    background: #000;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 16px;
+    font-size: 10px;
+    color: #fff;
+  }
+
+  .phone-notch {
+    width: 80px;
+    height: 4px;
+    background: #333;
+    border-radius: 2px;
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+  }
+
+  .phone-content {
+    min-height: 616px;
+    background: #fafafa;
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* 画布中的组件渲染 */
+  .canvas-component {
+    position: relative;
+    cursor: pointer;
+    transition: box-shadow 0.15s ease;
+  }
+
+  .canvas-component:hover {
+    box-shadow: inset 0 0 0 1px rgba(0, 212, 170, 0.3);
+  }
+
+  .canvas-component.selected {
+    box-shadow: inset 0 0 0 2px var(--accent) !important;
+  }
+
+  .canvas-component.drop-target {
+    box-shadow: inset 0 0 0 2px var(--warning) !important;
+    background: rgba(255, 217, 61, 0.05) !important;
+  }
+
+  .canvas-component .resize-handle {
+    display: none;
+    position: absolute;
+    width: 8px;
+    height: 8px;
+    background: var(--accent);
+    border: 1px solid #fff;
+    border-radius: 1px;
+    z-index: 10;
+  }
+
+  .canvas-component.selected .resize-handle { display: block; }
+  .resize-handle.se { bottom: -4px; right: -4px; cursor: se-resize; }
+  .resize-handle.sw { bottom: -4px; left: -4px; cursor: sw-resize; }
+  .resize-handle.ne { top: -4px; right: -4px; cursor: ne-resize; }
+  .resize-handle.nw { top: -4px; left: -4px; cursor: nw-resize; }
+
+  .component-label {
+    position: absolute;
+    top: -18px;
+    left: 0;
+    font-size: 9px;
+    color: var(--accent);
+    background: var(--bg-primary);
+    padding: 1px 5px;
+    border-radius: 2px;
+    white-space: nowrap;
+    display: none;
+    pointer-events: none;
+    z-index: 20;
+  }
+
+  .canvas-component.selected .component-label { display: block; }
+
+  /* XML代码编辑器 */
+  .code-container {
+    flex: 1;
+    display: none;
+    overflow: hidden;
+    position: relative;
+  }
+
+  .code-container.active { display: flex; }
+  .canvas-container.hidden { display: none; }
+
+  .code-editor {
+    flex: 1;
+    background: var(--bg-primary);
+    color: #c8d6e5;
+    font-family: 'Fira Code', 'Cascadia Code', 'JetBrains Mono', 'Consolas', monospace;
+    font-size: 13px;
+    line-height: 1.6;
+    padding: 16px;
+    border: none;
+    outline: none;
+    resize: none;
+    tab-size: 2;
+    white-space: pre;
+    overflow: auto;
+  }
+
+  .code-editor::-webkit-scrollbar { width: 6px; height: 6px; }
+  .code-editor::-webkit-scrollbar-track { background: transparent; }
+  .code-editor::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+  /* === 右侧属性面板 === */
+  .panel-right {
+    width: 280px;
+    background: var(--bg-secondary);
+    border-left: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+    overflow: hidden;
+    transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1), min-width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+  }
+
+  .panel-right.collapsed {
+    width: 0;
+    min-width: 0;
+    border-left: none;
+  }
+
+  .panel-right.collapsed > * { display: none; }
+
+  .props-empty {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-muted);
+    gap: 8px;
+  }
+
+  .props-empty svg { width: 32px; height: 32px; opacity: 0.4; }
+  .props-empty span { font-size: 12px; }
+
+  .props-content {
+    flex: 1;
+    overflow-y: auto;
+    display: none;
+    flex-direction: column;
+  }
+
+  .props-content.active { display: flex; }
+
+  .props-content::-webkit-scrollbar { width: 4px; }
+  .props-content::-webkit-scrollbar-track { background: transparent; }
+  .props-content::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+  .prop-section {
+    border-bottom: 1px solid var(--border);
+  }
+
+  .prop-section-header {
+    padding: 8px 14px;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    transition: background var(--transition);
+  }
+
+  .prop-section-header:hover { background: var(--bg-hover); }
+
+  .prop-section-header .arrow {
+    font-size: 10px;
+    transition: transform var(--transition);
+  }
+
+  .prop-section-header.collapsed .arrow { transform: rotate(-90deg); }
+
+  .prop-section-body { padding: 4px 0; }
+  .prop-section-header.collapsed + .prop-section-body { display: none; }
+
+  .prop-row {
+    display: flex;
+    align-items: center;
+    padding: 4px 14px;
+    gap: 8px;
+  }
+
+  .prop-row label {
+    font-size: 11px;
+    color: var(--text-secondary);
+    min-width: 70px;
+    flex-shrink: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .prop-row input, .prop-row select {
+    flex: 1;
+    background: var(--bg-primary);
+    border: 1px solid var(--border);
+    color: var(--text-primary);
+    padding: 4px 8px;
+    border-radius: var(--radius-sm);
+    font-size: 11px;
+    outline: none;
+    transition: border-color var(--transition);
+    min-width: 0;
+  }
+
+  .prop-row input:focus, .prop-row select:focus { border-color: var(--accent); }
+
+  .prop-row select {
+    cursor: pointer;
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%236a6a8a'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 6px center;
+    padding-right: 20px;
+  }
+
+  .prop-row input[type="color"] {
+    padding: 2px;
+    height: 26px;
+    cursor: pointer;
+  }
+
+  .prop-row .unit {
+    font-size: 10px;
+    color: var(--text-muted);
+    flex-shrink: 0;
+  }
+
+  /* === 底部状态栏 === */
+  .statusbar {
+    height: 24px;
+    background: var(--bg-secondary);
+    border-top: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    padding: 0 12px;
+    font-size: 10px;
+    color: var(--text-muted);
+    gap: 16px;
+    flex-shrink: 0;
+  }
+
+  .statusbar .dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--success);
+  }
+
+  /* === Toast 通知 === */
+  .toast-container {
+    position: fixed;
+    bottom: 40px;
+    right: 16px;
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .toast {
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+    padding: 8px 16px;
+    border-radius: var(--radius);
+    font-size: 12px;
+    box-shadow: var(--shadow-lg);
+    border-left: 3px solid var(--accent);
+    animation: toastIn 0.3s ease, toastOut 0.3s ease 2.5s forwards;
+    max-width: 300px;
+  }
+
+  @keyframes toastIn { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: translateX(0); } }
+  @keyframes toastOut { from { opacity: 1; } to { opacity: 0; transform: translateY(10px); } }
+
+  /* === 拖拽占位符 === */
+  .drag-ghost {
+    position: fixed;
+    pointer-events: none;
+    z-index: 9999;
+    opacity: 0.85;
+    transform: rotate(2deg);
+  }
+
+  .drag-ghost .component-item {
+    background: var(--bg-tertiary);
+    border: 1px solid var(--accent);
+    box-shadow: var(--shadow-lg);
+    padding: 8px 14px;
+    border-radius: var(--radius);
+  }
+
+  /* === 右键菜单 === */
+  .context-menu {
+    position: fixed;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-lg);
+    padding: 4px;
+    z-index: 500;
+    min-width: 160px;
+    display: none;
+  }
+
+  .context-menu.show { display: block; }
+
+  .context-menu-item {
+    padding: 6px 12px;
+    font-size: 12px;
+    color: var(--text-secondary);
+    cursor: pointer;
+    border-radius: var(--radius-sm);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all var(--transition);
+  }
+
+  .context-menu-item:hover {
+    background: var(--bg-hover);
+    color: var(--text-primary);
+  }
+
+  .context-menu-item.danger:hover { color: var(--danger); }
+  .context-menu-divider { height: 1px; background: var(--border); margin: 4px 0; }
+
+  /* === 组件树面板 === */
+  .tree-container {
+    border-top: 1px solid var(--border);
+    max-height: 200px;
+    overflow-y: auto;
+    flex-shrink: 0;
+  }
+
+  .tree-node {
+    padding: 3px 8px 3px;
+    font-size: 11px;
+    color: var(--text-secondary);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    transition: background var(--transition);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .tree-node:hover { background: var(--bg-hover); }
+  .tree-node.active { background: var(--accent-glow); color: var(--accent); }
+  .tree-node .indent { display: inline-block; }
+
+  .tree-node .toggle {
+    width: 14px;
+    text-align: center;
+    font-size: 9px;
+    color: var(--text-muted);
+    flex-shrink: 0;
+    cursor: pointer;
+    transition: transform 0.15s ease;
+  }
+
+  .tree-node .toggle.collapsed {
+    transform: rotate(-90deg);
+  }
+
+  .tree-children.collapsed {
+    display: none;
+  }
+
+  .tree-node .type-icon {
+    font-size: 10px;
+    flex-shrink: 0;
+  }
+
+  /* 右键菜单 */
+  .context-menu {
+    position: fixed;
+    z-index: 9999;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 4px 0;
+    min-width: 140px;
+    box-shadow: var(--shadow-lg);
+    display: none;
+  }
+
+  .context-menu.show { display: block; }
+
+  .context-menu-item {
+    padding: 6px 14px;
+    font-size: 12px;
+    color: var(--text-secondary);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: background var(--transition), color var(--transition);
+  }
+
+  .context-menu-item:hover {
+    background: var(--accent);
+    color: #fff;
+  }
+
+  .context-menu-item svg {
+    width: 14px;
+    height: 14px;
+    flex-shrink: 0;
+  }
+
+  .context-menu-item.danger { color: #ef4444; }
+  .context-menu-item.danger:hover { background: #ef4444; color: #fff; }
+
+  .context-menu-sep {
+    height: 1px;
+    background: var(--border);
+    margin: 4px 0;
+  }
+
+  /* === 动画 === */
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(4px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .animate-in { animation: fadeIn 0.2s ease; }
+
+  /* === 触摸适配 === */
+  @media (pointer: coarse) {
+    .component-item { padding: 10px 12px; }
+    .toolbar-btn { padding: 8px 10px; min-height: 36px; }
+    .prop-row input, .prop-row select { padding: 8px; font-size: 14px; min-height: 36px; }
+    .prop-row label { font-size: 13px; }
+    .center-tab { padding: 8px 14px; }
+    .panel-search input { padding: 8px 10px; font-size: 14px; min-height: 36px; }
+    .tree-node { padding: 6px 8px; font-size: 13px; }
+    .context-menu-item { padding: 10px 14px; font-size: 14px; }
+    .canvas-component .resize-handle { width: 14px; height: 14px; }
+    .resize-handle.se { bottom: -7px; right: -7px; }
+    .resize-handle.sw { bottom: -7px; left: -7px; }
+    .resize-handle.ne { top: -7px; right: -7px; }
+    .resize-handle.nw { top: -7px; left: -7px; }
+  }
+
+  @media (max-width: 768px) {
+    .panel-left { width: 180px; }
+    .panel-right { width: 220px; }
+    .toolbar-brand span:last-child { display: none; }
+  }
+
+  @media (max-width: 600px) {
+    .main-container { flex-direction: column; }
+    .panel-left, .panel-right { width: 100%; max-height: 35vh; border-right: none; border-left: none; border-bottom: 1px solid var(--border); }
+    .panel-center { min-height: 40vh; }
+    .toolbar { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    .toolbar-btn .btn-label { display: none; }
+  }
+
+  /* 触摸拖拽幽灵 - 触摸设备使用 */
+  .touch-ghost {
+    position: fixed;
+    pointer-events: none;
+    z-index: 9999;
+    opacity: 0.85;
+    transform: scale(1.05);
+    filter: drop-shadow(0 4px 12px rgba(0,0,0,0.4));
+  }
+
+  .touch-ghost .component-item {
+    background: var(--bg-tertiary);
+    border: 1px solid var(--accent);
+    box-shadow: var(--shadow-lg);
+    padding: 10px 16px;
+    border-radius: var(--radius);
+  }
+
+  /* 缩放指示器 */
+  .pinch-indicator {
+    position: fixed;
+    bottom: 40px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--bg-tertiary);
+    color: var(--accent);
+    padding: 6px 16px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 600;
+    box-shadow: var(--shadow-lg);
+    z-index: 1000;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+  }
+
+  .pinch-indicator.show { opacity: 1; }
+</style>
+</head>
+<body>
+
+<!-- 顶部工具栏 -->
+<div class="toolbar">
+  <div class="toolbar-brand">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12" y2="18.01"/></svg>
+    LayoutEditor <span style="font-size:10px;color:var(--text-muted);font-weight:400;margin-left:4px;">v2.5.2</span>
+  </div>
+  <div class="toolbar-divider"></div>
+  <button class="toolbar-btn" onclick="openFile()" title="打开文件">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+    打开
+  </button>
+  <div class="toolbar-divider"></div>
+  <button class="toolbar-btn" onclick="undo()" title="撤销">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+    撤销
+  </button>
+  <button class="toolbar-btn" onclick="redo()" title="重做">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.13-9.36L23 10"/></svg>
+    重做
+  </button>
+  <button class="toolbar-btn" onclick="clearAll()" title="清空画布">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+    清空
+  </button>
+  <div class="toolbar-spacer"></div>
+  <button class="toolbar-btn" onclick="exportXML()">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+    导出XML
+  </button>
+  <div class="toolbar-divider"></div>
+  <button class="toolbar-btn" onclick="togglePageFullscreen()" title="页面全屏">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
+    全屏
+  </button>
+</div>
+
+<!-- 主体 -->
+<div class="main-container">
+  <!-- 左侧组件面板 -->
+  <div class="panel-left" id="panelLeft">
+    <div class="panel-section" id="componentSection">
+      <div class="panel-header" onclick="toggleSection('componentSection')">
+        <span>组件库</span>
+        <span class="section-arrow">▼</span>
+      </div>
+      <div class="panel-search">
+        <input type="text" placeholder="搜索组件..." id="componentSearch" oninput="filterComponents(this.value)" />
+      </div>
+      <div class="component-list" id="componentList"></div>
+    </div>
+    <!-- 组件树 -->
+    <div class="panel-section tree-section" id="treeSection">
+      <div class="panel-header" style="border-top: 1px solid var(--border);" onclick="toggleSection('treeSection')">
+        <span>组件树</span>
+        <span class="section-arrow">▼</span>
+      </div>
+      <div class="tree-container" id="componentTree"></div>
+    </div>
+  </div>
+
+  <!-- 中间编辑区 -->
+  <div class="panel-center">
+    <div class="center-tabs">
+      <div class="tab-panel-toggle" onclick="togglePanel('left')" title="折叠/展开左侧面板">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="3" x2="9" y2="21"/></svg>
+      </div>
+      <div class="tab-spacer"></div>
+      <div class="center-tab active" data-tab="design" onclick="switchTab('design')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+        设计
+      </div>
+      <div class="center-tab" data-tab="code" onclick="switchTab('code')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+        代码
+      </div>
+      <div class="center-tab" data-tab="split" onclick="switchTab('split')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="12" y1="3" x2="12" y2="21"/></svg>
+        分屏
+      </div>
+      <div class="tab-spacer"></div>
+      <div class="tab-panel-toggle" onclick="togglePanel('right')" title="折叠/展开右侧面板">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="15" y1="3" x2="15" y2="21"/></svg>
+      </div>
+    </div>
+
+    <div style="flex:1; display:flex; overflow:hidden; position:relative;">
+      <!-- 画布 -->
+      <div class="canvas-container" id="canvasContainer">
+        <!-- 画布浮动工具栏 -->
+        <div class="canvas-toolbar">
+          <button class="toolbar-btn" onclick="deleteSelected()" title="删除选中">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+          </button>
+          <button class="toolbar-btn" onclick="duplicateSelected()" title="复制组件">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+          </button>
+          <button class="toolbar-btn" onclick="moveUp()" title="上移">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="18 15 12 9 6 15"/></svg>
+          </button>
+          <button class="toolbar-btn" onclick="moveDown()" title="下移">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+          <div class="canvas-toolbar-sep"></div>
+          <div class="zoom-group">
+            <button class="toolbar-btn" onclick="setZoom(zoom-0.1)" title="缩小">−</button>
+            <input type="text" id="zoomInput" value="100%" onclick="setZoom(1)" onchange="setZoom(parseFloat(this.value)/100)" title="点击回到100%" />
+            <button class="toolbar-btn" onclick="setZoom(zoom+0.1)" title="放大">+</button>
+          </div>
+          <button class="toolbar-btn" onclick="fitToView()" title="自适应">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
+          </button>
+          <div class="canvas-toolbar-sep"></div>
+          <button class="toolbar-btn" onclick="toggleOrientation()" title="切换横竖屏">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="12" y1="18" x2="12" y2="18.01"/></svg>
+          </button>
+          <select class="ratio-select" id="ratioSelect" onchange="setPhoneRatio(this.value)" title="切换手机比例">
+            <option value="9-16">9:16</option>
+            <option value="4-3">4:3</option>
+            <option value="2-1">2:1</option>
+          </select>
+          <div class="canvas-toolbar-sep"></div>
+          <button class="toolbar-btn" onclick="toggleDesignFullscreen()" title="设计窗口全屏">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg>
+          </button>
+        </div>
+        <div class="phone-frame" id="phoneFrame">
+          <div class="frame-coords" id="frameCoords">x: 0, y: 0</div>
+          <div class="phone-status-bar">
+            <span>9:41</span>
+            <div class="phone-notch"></div>
+            <span>📶 🔋</span>
+          </div>
+          <div class="phone-content" id="phoneContent"></div>
+        </div>
+      </div>
+
+      <!-- 代码编辑器 -->
+      <div class="code-container" id="codeContainer">
+        <textarea class="code-editor" id="codeEditor" spellcheck="false"></textarea>
+      </div>
+    </div>
+  </div>
+
+  <!-- 右侧属性面板 -->
+  <div class="panel-right" id="panelRight">
+    <div class="panel-section" id="propsSection">
+      <div class="panel-header" onclick="toggleSection('propsSection')">
+        <span>属性</span>
+        <span class="section-arrow">▼</span>
+      </div>
+      <div class="props-empty" id="propsEmpty">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      <span>选择组件以编辑属性</span>
+    </div>
+    <div class="props-content" id="propsContent"></div>
+    </div>
+  </div>
+</div>
+
+<!-- 底部状态栏 -->
+<div class="statusbar">
+  <div class="dot"></div>
+  <span>就绪</span>
+  <span id="statusInfo">组件: 0</span>
+  <span style="flex:1"></span>
+  <span>Android XML Layout Editor v2.5.2</span>
+</div>
+
+<!-- 右键菜单 -->
+<div class="context-menu" id="contextMenu">
+  <div class="context-menu-item" onclick="duplicateSelected()">📋 复制组件</div>
+  <div class="context-menu-item" onclick="moveUp()">⬆ 上移</div>
+  <div class="context-menu-item" onclick="moveDown()">⬇ 下移</div>
+  <div class="context-menu-divider"></div>
+  <div class="context-menu-item danger" onclick="deleteSelected()">🗑 删除</div>
+</div>
+
+<!-- Toast容器 -->
+<div class="toast-container" id="toastContainer"></div>
+<!-- 右键菜单 -->
+<div class="context-menu" id="contextMenu">
+  <div class="context-menu-item" onclick="ctxCopy()">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+    复制组件
+  </div>
+  <div class="context-menu-item" onclick="ctxMoveUp()">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="18 15 12 9 6 15"/></svg>
+    上移
+  </div>
+  <div class="context-menu-item" onclick="ctxMoveDown()">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+    下移
+  </div>
+  <div class="context-menu-sep"></div>
+  <div class="context-menu-item danger" onclick="ctxDelete()">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+    删除
+  </div>
+</div>
+<!-- 文件输入 -->
+<input type="file" id="fileInput" accept=".xml" onchange="handleFileSelect(event)" />
+<div class="pinch-indicator" id="pinchIndicator">100%</div>
+
+<script>
+// ===========================
+// Android 组件定义
+// ===========================
+const COMPONENT_DEFS = {
+  // 布局
+  LinearLayout: {
+    group: '布局', icon: '▦', color: 'var(--component-layout)',
+    tag: 'Layout',
+    defaults: {
+      orientation: 'vertical', layout_width: 'match_parent', layout_height: 'wrap_content',
+      background: '#ffffff', padding: '16dp', gravity: 'start'
+    },
+    props: {
+      orientation: { type: 'select', options: ['vertical', 'horizontal'], label: '方向' },
+      gravity: { type: 'select', options: ['start', 'center', 'end', 'top', 'bottom'], label: '对齐' },
+      background: { type: 'color', label: '背景色' },
+      padding: { type: 'text', label: '内边距', unit: 'dp' },
+      layout_margin: { type: 'text', label: '外边距', unit: 'dp' },
+    },
+    isContainer: true
+  },
+  RelativeLayout: {
+    group: '布局', icon: '⊞', color: 'var(--component-layout)',
+    tag: 'Layout',
+    defaults: {
+      layout_width: 'match_parent', layout_height: 'wrap_content',
+      background: '#ffffff', padding: '16dp'
+    },
+    props: {
+      background: { type: 'color', label: '背景色' },
+      padding: { type: 'text', label: '内边距', unit: 'dp' },
+      layout_margin: { type: 'text', label: '外边距', unit: 'dp' },
+    },
+    isContainer: true
+  },
+  ConstraintLayout: {
+    group: '布局', icon: '⊞', color: 'var(--component-layout)',
+    tag: 'Layout',
+    defaults: {
+      layout_width: 'match_parent', layout_height: 'match_parent',
+      background: '#ffffff', padding: '16dp'
+    },
+    props: {
+      background: { type: 'color', label: '背景色' },
+      padding: { type: 'text', label: '内边距', unit: 'dp' },
+    },
+    isContainer: true
+  },
+  FrameLayout: {
+    group: '布局', icon: '◻', color: 'var(--component-layout)',
+    tag: 'Layout',
+    defaults: {
+      layout_width: 'match_parent', layout_height: 'wrap_content',
+      background: '#ffffff', padding: '8dp'
+    },
+    props: {
+      background: { type: 'color', label: '背景色' },
+      padding: { type: 'text', label: '内边距', unit: 'dp' },
+    },
+    isContainer: true
+  },
+  ScrollView: {
+    group: '布局', icon: '⇕', color: 'var(--component-scroll)',
+    tag: 'Layout',
+    defaults: {
+      layout_width: 'match_parent', layout_height: 'match_parent',
+      background: '#ffffff'
+    },
+    props: {
+      background: { type: 'color', label: '背景色' },
+    },
+    isContainer: true
+  },
+  // 文本
+  TextView: {
+    group: '文本', icon: 'T', color: 'var(--component-text)',
+    tag: 'Widget',
+    defaults: {
+      text: 'TextView', layout_width: 'wrap_content', layout_height: 'wrap_content',
+      textSize: '14sp', textColor: '#333333', background: 'transparent',
+      padding: '8dp', layout_margin: '4dp', gravity: 'start'
+    },
+    props: {
+      text: { type: 'text', label: '文本' },
+      textSize: { type: 'text', label: '字号', unit: 'sp' },
+      textColor: { type: 'color', label: '文字颜色' },
+      background: { type: 'color', label: '背景色' },
+      gravity: { type: 'select', options: ['start', 'center', 'end'], label: '对齐' },
+      padding: { type: 'text', label: '内边距', unit: 'dp' },
+      layout_margin: { type: 'text', label: '外边距', unit: 'dp' },
+      textStyle: { type: 'select', options: ['normal', 'bold', 'italic'], label: '样式' },
+      textAllCaps: { type: 'select', options: ['false', 'true'], label: '全大写' },
+    }
+  },
+  Button: {
+    group: '按钮', icon: '▢', color: 'var(--component-button)',
+    tag: 'Widget',
+    defaults: {
+      text: 'Button', layout_width: 'wrap_content', layout_height: 'wrap_content',
+      textSize: '14sp', textColor: '#ffffff', background: '#4CAF50',
+      padding: '10dp 24dp', layout_margin: '4dp', textAllCaps: 'false'
+    },
+    props: {
+      text: { type: 'text', label: '文本' },
+      textSize: { type: 'text', label: '字号', unit: 'sp' },
+      textColor: { type: 'color', label: '文字颜色' },
+      background: { type: 'color', label: '背景色' },
+      padding: { type: 'text', label: '内边距', unit: 'dp' },
+      layout_margin: { type: 'text', label: '外边距', unit: 'dp' },
+      textAllCaps: { type: 'select', options: ['false', 'true'], label: '全大写' },
+    }
+  },
+  EditText: {
+    group: '输入', icon: '▭', color: 'var(--component-input)',
+    tag: 'Widget',
+    defaults: {
+      text: '', hint: '请输入内容', layout_width: 'match_parent', layout_height: 'wrap_content',
+      textSize: '14sp', textColor: '#333333', background: '#f0f0f0',
+      padding: '12dp', layout_margin: '4dp', inputType: 'text'
+    },
+    props: {
+      text: { type: 'text', label: '文本' },
+      hint: { type: 'text', label: '提示' },
+      textSize: { type: 'text', label: '字号', unit: 'sp' },
+      textColor: { type: 'color', label: '文字颜色' },
+      background: { type: 'color', label: '背景色' },
+      padding: { type: 'text', label: '内边距', unit: 'dp' },
+      layout_margin: { type: 'text', label: '外边距', unit: 'dp' },
+      inputType: { type: 'select', options: ['text', 'number', 'phone', 'email', 'password'], label: '输入类型' },
+    }
+  },
+  ImageView: {
+    group: '图片', icon: '🖼', color: 'var(--component-image)',
+    tag: 'Widget',
+    defaults: {
+      layout_width: '100dp', layout_height: '100dp',
+      background: '#e0e0e0', layout_margin: '4dp',
+      scaleType: 'centerCrop', src: ''
+    },
+    props: {
+      layout_width: { type: 'text', label: '宽度', unit: 'dp' },
+      layout_height: { type: 'text', label: '高度', unit: 'dp' },
+      background: { type: 'color', label: '背景色' },
+      layout_margin: { type: 'text', label: '外边距', unit: 'dp' },
+      scaleType: { type: 'select', options: ['centerCrop', 'centerInside', 'fitCenter', 'fitXY'], label: '缩放' },
+      src: { type: 'text', label: '图片路径' },
+    }
+  },
+  CheckBox: {
+    group: '选择', icon: '☑', color: 'var(--component-list)',
+    tag: 'Widget',
+    defaults: {
+      text: 'CheckBox', layout_width: 'wrap_content', layout_height: 'wrap_content',
+      textSize: '14sp', textColor: '#333333', layout_margin: '4dp',
+      background: 'transparent', padding: '4dp'
+    },
+    props: {
+      text: { type: 'text', label: '文本' },
+      textSize: { type: 'text', label: '字号', unit: 'sp' },
+      textColor: { type: 'color', label: '文字颜色' },
+      layout_margin: { type: 'text', label: '外边距', unit: 'dp' },
+      checked: { type: 'select', options: ['false', 'true'], label: '选中' },
+    }
+  },
+  RadioButton: {
+    group: '选择', icon: '◉', color: 'var(--component-list)',
+    tag: 'Widget',
+    defaults: {
+      text: 'RadioButton', layout_width: 'wrap_content', layout_height: 'wrap_content',
+      textSize: '14sp', textColor: '#333333', layout_margin: '4dp',
+      background: 'transparent', padding: '4dp'
+    },
+    props: {
+      text: { type: 'text', label: '文本' },
+      textSize: { type: 'text', label: '字号', unit: 'sp' },
+      textColor: { type: 'color', label: '文字颜色' },
+      layout_margin: { type: 'text', label: '外边距', unit: 'dp' },
+      checked: { type: 'select', options: ['false', 'true'], label: '选中' },
+    }
+  },
+  Switch: {
+    group: '选择', icon: '⏻', color: 'var(--component-list)',
+    tag: 'Widget',
+    defaults: {
+      text: 'Switch', layout_width: 'wrap_content', layout_height: 'wrap_content',
+      textSize: '14sp', textColor: '#333333', layout_margin: '4dp',
+      background: 'transparent', padding: '4dp'
+    },
+    props: {
+      text: { type: 'text', label: '文本' },
+      textSize: { type: 'text', label: '字号', unit: 'sp' },
+      textColor: { type: 'color', label: '文字颜色' },
+      layout_margin: { type: 'text', label: '外边距', unit: 'dp' },
+      checked: { type: 'select', options: ['false', 'true'], label: '开启' },
+    }
+  },
+  ProgressBar: {
+    group: '进度', icon: '▰', color: 'var(--component-image)',
+    tag: 'Widget',
+    defaults: {
+      layout_width: 'match_parent', layout_height: '4dp',
+      layout_margin: '8dp', background: '#e0e0e0', progress: '50', max: '100'
+    },
+    props: {
+      layout_width: { type: 'text', label: '宽度' },
+      layout_height: { type: 'text', label: '高度', unit: 'dp' },
+      layout_margin: { type: 'text', label: '外边距', unit: 'dp' },
+      progress: { type: 'text', label: '进度' },
+      max: { type: 'text', label: '最大值' },
+    }
+  },
+  SeekBar: {
+    group: '进度', icon: '▰', color: 'var(--component-image)',
+    tag: 'Widget',
+    defaults: {
+      layout_width: 'match_parent', layout_height: 'wrap_content',
+      layout_margin: '8dp', progress: '50', max: '100'
+    },
+    props: {
+      layout_width: { type: 'text', label: '宽度' },
+      layout_margin: { type: 'text', label: '外边距', unit: 'dp' },
+      progress: { type: 'text', label: '进度' },
+      max: { type: 'text', label: '最大值' },
+    }
+  },
+  Divider: {
+    group: '其他', icon: '—', color: 'var(--text-muted)',
+    tag: 'Widget',
+    defaults: {
+      layout_width: 'match_parent', layout_height: '1dp',
+      background: '#e0e0e0', layout_margin: '8dp'
+    },
+    props: {
+      layout_width: { type: 'text', label: '宽度' },
+      layout_height: { type: 'text', label: '高度', unit: 'dp' },
+      background: { type: 'color', label: '颜色' },
+      layout_margin: { type: 'text', label: '外边距', unit: 'dp' },
+    }
+  },
+  Space: {
+    group: '其他', icon: '␣', color: 'var(--text-muted)',
+    tag: 'Widget',
+    defaults: {
+      layout_width: 'match_parent', layout_height: '16dp',
+      background: 'transparent'
+    },
+    props: {
+      layout_width: { type: 'text', label: '宽度' },
+      layout_height: { type: 'text', label: '高度', unit: 'dp' },
+    }
+  },
+  CardView: {
+    group: '布局', icon: '▭', color: 'var(--component-layout)',
+    tag: 'Layout',
+    defaults: {
+      layout_width: 'match_parent', layout_height: 'wrap_content',
+      background: '#ffffff', padding: '16dp', layout_margin: '8dp',
+      cardCornerRadius: '8dp', cardElevation: '2dp'
+    },
+    props: {
+      background: { type: 'color', label: '背景色' },
+      padding: { type: 'text', label: '内边距', unit: 'dp' },
+      layout_margin: { type: 'text', label: '外边距', unit: 'dp' },
+      cardCornerRadius: { type: 'text', label: '圆角', unit: 'dp' },
+      cardElevation: { type: 'text', label: '阴影', unit: 'dp' },
+    },
+    isContainer: true
+  },
+  RecyclerView: {
+    group: '列表', icon: '☰', color: 'var(--component-list)',
+    tag: 'Layout',
+    defaults: {
+      layout_width: 'match_parent', layout_height: '200dp',
+      background: '#ffffff', layout_margin: '4dp'
+    },
+    props: {
+      layout_width: { type: 'text', label: '宽度' },
+      layout_height: { type: 'text', label: '高度', unit: 'dp' },
+      background: { type: 'color', label: '背景色' },
+      layout_margin: { type: 'text', label: '外边距', unit: 'dp' },
+    },
+    isContainer: false
+  },
+  WebView: {
+    group: '高级', icon: '🌐', color: '#7986cb',
+    tag: 'Widget',
+    defaults: {
+      layout_width: 'match_parent', layout_height: '300dp',
+      background: '#e8eaf6', layout_margin: '4dp'
+    },
+    props: {
+      layout_width: { type: 'text', label: '宽度' },
+      layout_height: { type: 'text', label: '高度', unit: 'dp' },
+      background: { type: 'color', label: '背景色' },
+      layout_margin: { type: 'text', label: '外边距', unit: 'dp' },
+      url: { type: 'text', label: 'URL' },
+    }
+  },
+  Spinner: {
+    group: '选择', icon: '▾', color: 'var(--component-list)',
+    tag: 'Widget',
+    defaults: {
+      layout_width: 'match_parent', layout_height: 'wrap_content',
+      background: '#ffffff', layout_margin: '4dp', padding: '10dp',
+      entries: '选项1,选项2,选项3'
+    },
+    props: {
+      layout_width: { type: 'text', label: '宽度' },
+      layout_height: { type: 'text', label: '高度' },
+      background: { type: 'color', label: '背景色' },
+      layout_margin: { type: 'text', label: '外边距', unit: 'dp' },
+      entries: { type: 'text', label: '选项列表' },
+    }
+  },
+  RatingBar: {
+    group: '进度', icon: '★', color: 'var(--component-image)',
+    tag: 'Widget',
+    defaults: {
+      layout_width: 'wrap_content', layout_height: 'wrap_content',
+      layout_margin: '8dp', numStars: '5', rating: '3', stepSize: '1'
+    },
+    props: {
+      layout_width: { type: 'text', label: '宽度' },
+      layout_margin: { type: 'text', label: '外边距', unit: 'dp' },
+      numStars: { type: 'text', label: '星星数量' },
+      rating: { type: 'text', label: '当前评分' },
+      stepSize: { type: 'select', options: ['0.5', '1'], label: '步长' },
+    }
+  },
+  SearchView: {
+    group: '高级', icon: '🔍', color: '#7986cb',
+    tag: 'Widget',
+    defaults: {
+      layout_width: 'match_parent', layout_height: 'wrap_content',
+      background: '#ffffff', layout_margin: '8dp', queryHint: '搜索...'
+    },
+    props: {
+      layout_width: { type: 'text', label: '宽度' },
+      background: { type: 'color', label: '背景色' },
+      layout_margin: { type: 'text', label: '外边距', unit: 'dp' },
+      queryHint: { type: 'text', label: '提示文本' },
+      iconifiedByDefault: { type: 'select', options: ['false', 'true'], label: '默认图标化' },
+    }
+  },
+  Chip: {
+    group: '高级', icon: '🏷', color: '#7986cb',
+    tag: 'Widget',
+    defaults: {
+      text: 'Chip', layout_width: 'wrap_content', layout_height: 'wrap_content',
+      background: '#e0e0e0', layout_margin: '4dp', padding: '6dp 14dp',
+      chipBackgroundColor: '#E8EAF6', chipIcon: 'false', closeIcon: 'false'
+    },
+    props: {
+      text: { type: 'text', label: '文本' },
+      background: { type: 'color', label: '背景色' },
+      layout_margin: { type: 'text', label: '外边距', unit: 'dp' },
+      chipBackgroundColor: { type: 'color', label: '芯片背景' },
+      chipIcon: { type: 'select', options: ['false', 'true'], label: '图标' },
+      closeIcon: { type: 'select', options: ['false', 'true'], label: '关闭按钮' },
+    }
+  },
+  FloatingActionButton: {
+    group: '按钮', icon: '⊕', color: 'var(--component-button)',
+    tag: 'Widget',
+    defaults: {
+      layout_width: '56dp', layout_height: '56dp',
+      background: '#FF4081', layout_margin: '16dp',
+      src: '', fabSize: 'normal', fabCustomSize: ''
+    },
+    props: {
+      layout_width: { type: 'text', label: '宽度', unit: 'dp' },
+      layout_height: { type: 'text', label: '高度', unit: 'dp' },
+      background: { type: 'color', label: '背景色' },
+      layout_margin: { type: 'text', label: '外边距', unit: 'dp' },
+      src: { type: 'text', label: '图标路径' },
+      fabSize: { type: 'select', options: ['normal', 'mini', 'auto'], label: '尺寸' },
+    }
+  },
+  ImageButton: {
+    group: '按钮', icon: '🖼', color: 'var(--component-button)',
+    tag: 'Widget',
+    defaults: {
+      layout_width: '48dp', layout_height: '48dp',
+      background: 'transparent', layout_margin: '4dp', src: ''
+    },
+    props: {
+      layout_width: { type: 'text', label: '宽度', unit: 'dp' },
+      layout_height: { type: 'text', label: '高度', unit: 'dp' },
+      background: { type: 'color', label: '背景色' },
+      layout_margin: { type: 'text', label: '外边距', unit: 'dp' },
+      src: { type: 'text', label: '图片路径' },
+    }
+  },
+  ViewPager: {
+    group: '高级', icon: '⇔', color: '#7986cb',
+    tag: 'Layout',
+    defaults: {
+      layout_width: 'match_parent', layout_height: '200dp',
+      background: '#f5f5f5', layout_margin: '4dp'
+    },
+    props: {
+      layout_width: { type: 'text', label: '宽度' },
+      layout_height: { type: 'text', label: '高度', unit: 'dp' },
+      background: { type: 'color', label: '背景色' },
+      layout_margin: { type: 'text', label: '外边距', unit: 'dp' },
+    },
+    isContainer: false
+  },
+  TabLayout: {
+    group: '高级', icon: '▦', color: '#7986cb',
+    tag: 'Widget',
+    defaults: {
+      layout_width: 'match_parent', layout_height: 'wrap_content',
+      background: '#ffffff', layout_margin: '0dp', tabMode: 'fixed',
+      tabs: '首页,发现,消息,我的'
+    },
+    props: {
+      layout_width: { type: 'text', label: '宽度' },
+      background: { type: 'color', label: '背景色' },
+      layout_margin: { type: 'text', label: '外边距', unit: 'dp' },
+      tabMode: { type: 'select', options: ['fixed', 'scrollable'], label: '模式' },
+      tabIndicatorColor: { type: 'color', label: '指示器颜色' },
+      tabSelectedTextColor: { type: 'color', label: '选中文字颜色' },
+      tabs: { type: 'text', label: '标签页（逗号分隔）' },
+    }
+  },
+  TextInputLayout: {
+    group: '输入', icon: '📝', color: 'var(--component-input)',
+    tag: 'Layout',
+    defaults: {
+      layout_width: 'match_parent', layout_height: 'wrap_content',
+      background: 'transparent', layout_margin: '8dp', hint: '标签文本',
+      helperText: ''
+    },
+    props: {
+      layout_width: { type: 'text', label: '宽度' },
+      background: { type: 'color', label: '背景色' },
+      layout_margin: { type: 'text', label: '外边距', unit: 'dp' },
+      hint: { type: 'text', label: '标签' },
+      helperText: { type: 'text', label: '帮助文本' },
+    },
+    isContainer: true
+  },
+  NotificationBadge: {
+    group: '其他', icon: '🔔', color: 'var(--component-image)',
+    tag: 'Widget',
+    defaults: {
+      layout_width: 'wrap_content', layout_height: 'wrap_content',
+      background: 'transparent', layout_margin: '4dp', text: '3',
+      badgeColor: '#F44336'
+    },
+    props: {
+      text: { type: 'text', label: '数字' },
+      badgeColor: { type: 'color', label: '徽标颜色' },
+      layout_margin: { type: 'text', label: '外边距', unit: 'dp' },
+    }
+  },
+  AvatarView: {
+    group: '其他', icon: '👤', color: 'var(--component-image)',
+    tag: 'Widget',
+    defaults: {
+      layout_width: '48dp', layout_height: '48dp',
+      background: '#e0e0e0', layout_margin: '4dp'
+    },
+    props: {
+      layout_width: { type: 'text', label: '宽度', unit: 'dp' },
+      layout_height: { type: 'text', label: '高度', unit: 'dp' },
+      background: { type: 'color', label: '背景色' },
+      layout_margin: { type: 'text', label: '外边距', unit: 'dp' },
+    }
+  },
+};
+
+// ===========================
+// 全局状态
+// ===========================
+let componentTree = [];       // 根级组件数组
+let selectedId = null;        // 当前选中组件ID
+let idCounter = 0;            // ID计数器
+let zoom = 1;                 // 缩放比例
+let currentTab = 'design';    // 当前标签页
+let undoStack = [];           // 撤销栈
+let redoStack = [];           // 重做栈
+let dragType = null;          // 当前拖拽的组件类型
+let dragGhost = null;         // 拖拽幽灵元素
+let dropTargetId = null;      // 放置目标ID
+let isLandscape = false;       // 是否横屏
+
+// ===========================
+// 工具函数
+// ===========================
+function genId() { return 'c_' + (++idCounter); }
+
+function deepClone(obj) { return JSON.parse(JSON.stringify(obj)); }
+
+function parseValue(val, unit) {
+  if (!val) return 0;
+  const n = parseFloat(val);
+  return isNaN(n) ? 0 : n;
+}
+
+function dpToPx(dp) { return dp * (zoom * 0.9); }
+
+function showToast(msg) {
+  const c = document.getElementById('toastContainer');
+  const t = document.createElement('div');
+  t.className = 'toast';
+  t.textContent = msg;
+  c.appendChild(t);
+  setTimeout(() => t.remove(), 3000);
+}
+
+function saveState() {
+  undoStack.push(deepClone(componentTree));
+  if (undoStack.length > 50) undoStack.shift();
+  redoStack = [];
+}
+
+function undo() {
+  if (!undoStack.length) return showToast('没有可撤销的操作');
+  redoStack.push(deepClone(componentTree));
+  componentTree = undoStack.pop();
+  selectedId = null;
+  renderAll();
+  showToast('已撤销');
+}
+
+function redo() {
+  if (!redoStack.length) return showToast('没有可重做的操作');
+  undoStack.push(deepClone(componentTree));
+  componentTree = redoStack.pop();
+  selectedId = null;
+  renderAll();
+  showToast('已重做');
+}
+
+// ===========================
+// 组件面板渲染
+// ===========================
+function renderComponentPanel(filter = '') {
+  const list = document.getElementById('componentList');
+  const groups = {};
+  const lf = filter.toLowerCase();
+
+  for (const [type, def] of Object.entries(COMPONENT_DEFS)) {
+    if (lf && !type.toLowerCase().includes(lf) && !def.group.toLowerCase().includes(lf)) continue;
+    if (!groups[def.group]) groups[def.group] = [];
+    groups[def.group].push({ type, ...def });
+  }
+
+  let html = '';
+  for (const [group, items] of Object.entries(groups)) {
+    html += `<div class="component-group-title" onclick="toggleGroup(this)"><span class="group-arrow">▼</span>${group}</div>`;
+    html += `<div class="component-group-items">`;
+    for (const item of items) {
+      html += `
+        <div class="component-item" draggable="true" data-type="${item.type}"
+             ondragstart="onDragStart(event, '${item.type}')"
+             onmousedown="onComponentMouseDown(event, '${item.type}')">
+          <div class="icon" style="background:${item.color}22; color:${item.color}">${item.icon}</div>
+          <span class="label">${item.type}</span>
+          <span class="tag">${item.tag}</span>
+        </div>`;
+    }
+    html += `</div>`;
+  }
+  list.innerHTML = html;
+}
+
+function filterComponents(val) { renderComponentPanel(val); }
+
+// ===========================
+// 拖拽系统
+// ===========================
+function onDragStart(e, type) {
+  dragType = type;
+  e.dataTransfer.effectAllowed = 'copy';
+  e.dataTransfer.setData('text/plain', type);
+
+  // 自定义拖拽图像
+  const ghost = document.createElement('div');
+  ghost.className = 'drag-ghost';
+  ghost.innerHTML = `<div class="component-item"><div class="icon" style="background:${COMPONENT_DEFS[type].color}22; color:${COMPONENT_DEFS[type].color}">${COMPONENT_DEFS[type].icon}</div><span class="label">${type}</span></div>`;
+  document.body.appendChild(ghost);
+  e.dataTransfer.setDragImage(ghost, 0, 0);
+  setTimeout(() => ghost.remove(), 0);
+}
+
+// 鼠标拖拽（备选方案）
+let mouseDragType = null;
+let mouseDragGhost = null;
+
+function onComponentMouseDown(e, type) {
+  // 仅在非拖拽时触发
+  mouseDragType = type;
+  const startX = e.clientX;
+  const startY = e.clientY;
+
+  const onMove = (ev) => {
+    if (Math.abs(ev.clientX - startX) < 5 && Math.abs(ev.clientY - startY) < 5) return;
+    if (!mouseDragGhost) {
+      mouseDragGhost = document.createElement('div');
+      mouseDragGhost.className = 'drag-ghost';
+      mouseDragGhost.innerHTML = `<div class="component-item"><div class="icon" style="background:${COMPONENT_DEFS[type].color}22; color:${COMPONENT_DEFS[type].color}">${COMPONENT_DEFS[type].icon}</div><span class="label">${type}</span></div>`;
+      document.body.appendChild(mouseDragGhost);
+    }
+    mouseDragGhost.style.left = ev.clientX + 10 + 'px';
+    mouseDragGhost.style.top = ev.clientY + 10 + 'px';
+    dragType = type;
+
+    // 高亮放置目标
+    const content = document.getElementById('phoneContent');
+    const target = findDropTarget(ev.clientX, ev.clientY);
+    document.querySelectorAll('.drop-target').forEach(el => el.classList.remove('drop-target'));
+    if (target) {
+      target.classList.add('drop-target');
+      dropTargetId = target.dataset.id;
+    } else {
+      dropTargetId = null;
+    }
+  };
+
+  const onUp = (ev) => {
+    document.removeEventListener('mousemove', onMove);
+    document.removeEventListener('mouseup', onUp);
+    if (mouseDragGhost) {
+      mouseDragGhost.remove();
+      mouseDragGhost = null;
+    }
+    document.querySelectorAll('.drop-target').forEach(el => el.classList.remove('drop-target'));
+
+    if (dragType && (Math.abs(ev.clientX - startX) > 5 || Math.abs(ev.clientY - startY) > 5)) {
+      const content = document.getElementById('phoneContent');
+      const rect = content.getBoundingClientRect();
+      if (ev.clientX >= rect.left && ev.clientX <= rect.right && ev.clientY >= rect.top && ev.clientY <= rect.bottom) {
+        addComponent(dragType, dropTargetId);
+      }
+    }
+    dragType = null;
+    mouseDragType = null;
+    dropTargetId = null;
+  };
+
+  document.addEventListener('mousemove', onMove);
+  document.addEventListener('mouseup', onUp);
+}
+
+function findDropTarget(x, y) {
+  const els = document.querySelectorAll('.canvas-component');
+  let target = null;
+  for (const el of els) {
+    const r = el.getBoundingClientRect();
+    if (x >= r.left && x <= r.right && y >= r.top && y <= r.bottom) {
+      const def = COMPONENT_DEFS[el.dataset.type];
+      if (def && def.isContainer) target = el;
+    }
+  }
+  return target;
+}
+
+// 手机边框拖动系统
+let frameDrag = { active: false, startX: 0, startY: 0, frameX: 0, frameY: 0 };
+
+function initFrameDrag() {
+  const frame = document.getElementById('phoneFrame');
+  const container = document.getElementById('canvasContainer');
+  const coords = document.getElementById('frameCoords');
+
+  // 初始居中
+  function centerFrame() {
+    const cr = container.getBoundingClientRect();
+    const fr = frame.getBoundingClientRect();
+    frame.style.left = Math.max(0, (cr.width - fr.width) / 2) + 'px';
+    frame.style.top = Math.max(0, (cr.height - fr.height) / 2) + 'px';
+    frameDrag.frameX = parseInt(frame.style.left);
+    frameDrag.frameY = parseInt(frame.style.top);
+    updateCoords();
+  }
+
+  function updateCoords() {
+    coords.textContent = `x: ${frameDrag.frameX}, y: ${frameDrag.frameY}`;
+  }
+
+  frame.addEventListener('mousedown', (e) => {
+    if (e.target.closest('.canvas-component') || e.target.closest('.resize-handle')) return;
+    frameDrag.active = true;
+    frameDrag.startX = e.clientX - frameDrag.frameX;
+    frameDrag.startY = e.clientY - frameDrag.frameY;
+    frame.classList.add('dragging');
+    e.preventDefault();
+  });
+
+  document.addEventListener('mousemove', (e) => {
+    if (!frameDrag.active) return;
+    frameDrag.frameX = Math.round(e.clientX - frameDrag.startX);
+    frameDrag.frameY = Math.round(e.clientY - frameDrag.startY);
+    frame.style.left = frameDrag.frameX + 'px';
+    frame.style.top = frameDrag.frameY + 'px';
+    updateCoords();
+  });
+
+  document.addEventListener('mouseup', () => {
+    if (frameDrag.active) {
+      frameDrag.active = false;
+      frame.classList.remove('dragging');
+    }
+  });
+
+  // 初始居中 & 窗口resize时重新居中
+  centerFrame();
+  window.addEventListener('resize', centerFrame);
+}
+
+// 画布拖放事件
+function initCanvasDrop() {
+  const content = document.getElementById('phoneContent');
+
+  content.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'copy';
+    const target = findDropTarget(e.clientX, e.clientY);
+    document.querySelectorAll('.drop-target').forEach(el => el.classList.remove('drop-target'));
+    if (target) {
+      target.classList.add('drop-target');
+      dropTargetId = target.dataset.id;
+    } else {
+      dropTargetId = null;
+    }
+  });
+
+  content.addEventListener('dragleave', (e) => {
+    document.querySelectorAll('.drop-target').forEach(el => el.classList.remove('drop-target'));
+  });
+
+  content.addEventListener('drop', (e) => {
+    e.preventDefault();
+    document.querySelectorAll('.drop-target').forEach(el => el.classList.remove('drop-target'));
+    const type = e.dataTransfer.getData('text/plain');
+    if (type && COMPONENT_DEFS[type]) {
+      addComponent(type, dropTargetId);
+    }
+    dropTargetId = null;
+  });
+}
+
+// ===========================
+// 触摸拖拽系统
+// ===========================
+let touchDragType = null;
+let touchDragGhost = null;
+let touchStartX = 0, touchStartY = 0;
+let touchMoved = false;
+
+function initTouchDrag() {
+  const componentList = document.getElementById('componentList');
+
+  componentList.addEventListener('touchstart', (e) => {
+    const item = e.target.closest('.component-item');
+    if (!item) return;
+    const type = item.dataset.type;
+    if (!type || !COMPONENT_DEFS[type]) return;
+
+    const touch = e.touches[0];
+    touchDragType = type;
+    touchStartX = touch.clientX;
+    touchStartY = touch.clientY;
+    touchMoved = false;
+  }, { passive: true });
+
+  document.addEventListener('touchmove', (e) => {
+    if (!touchDragType) return;
+    const touch = e.touches[0];
+    const dx = Math.abs(touch.clientX - touchStartX);
+    const dy = Math.abs(touch.clientY - touchStartY);
+
+    if (dx < 10 && dy < 10) return;
+    touchMoved = true;
+
+    // 阻止页面滚动
+    e.preventDefault();
+
+    if (!touchDragGhost) {
+      touchDragGhost = document.createElement('div');
+      touchDragGhost.className = 'touch-ghost';
+      touchDragGhost.innerHTML = `<div class="component-item"><div class="icon" style="background:${COMPONENT_DEFS[touchDragType].color}22; color:${COMPONENT_DEFS[touchDragType].color}">${COMPONENT_DEFS[touchDragType].icon}</div><span class="label">${touchDragType}</span></div>`;
+      document.body.appendChild(touchDragGhost);
+    }
+
+    touchDragGhost.style.left = (touch.clientX - 40) + 'px';
+    touchDragGhost.style.top = (touch.clientY - 20) + 'px';
+    dragType = touchDragType;
+
+    // 高亮放置目标
+    const target = findDropTarget(touch.clientX, touch.clientY);
+    document.querySelectorAll('.drop-target').forEach(el => el.classList.remove('drop-target'));
+    if (target) {
+      target.classList.add('drop-target');
+      dropTargetId = target.dataset.id;
+    } else {
+      dropTargetId = null;
+    }
+  }, { passive: false });
+
+  document.addEventListener('touchend', (e) => {
+    if (!touchDragType) return;
+
+    if (touchDragGhost) {
+      touchDragGhost.remove();
+      touchDragGhost = null;
+    }
+    document.querySelectorAll('.drop-target').forEach(el => el.classList.remove('drop-target'));
+
+    if (touchMoved && dragType) {
+      const touch = e.changedTouches[0];
+      const content = document.getElementById('phoneContent');
+      const rect = content.getBoundingClientRect();
+      if (touch.clientX >= rect.left && touch.clientX <= rect.right &&
+          touch.clientY >= rect.top && touch.clientY <= rect.bottom) {
+        addComponent(dragType, dropTargetId);
+      }
+    }
+
+    dragType = null;
+    touchDragType = null;
+    touchMoved = false;
+    dropTargetId = null;
+  }, { passive: true });
+}
+
+// ===========================
+// 双指缩放系统
+// ===========================
+let pinchStartDist = 0;
+let pinchStartZoom = 1;
+let pinchTimer = null;
+const pinchIndicator = null;
+
+function initPinchZoom() {
+  const canvas = document.getElementById('canvasContainer');
+
+  canvas.addEventListener('touchstart', (e) => {
+    if (e.touches.length === 2) {
+      e.preventDefault();
+      pinchStartDist = getTouchDist(e.touches);
+      pinchStartZoom = zoom;
+      showPinchIndicator();
+    }
+  }, { passive: false });
+
+  canvas.addEventListener('touchmove', (e) => {
+    if (e.touches.length === 2) {
+      e.preventDefault();
+      const dist = getTouchDist(e.touches);
+      const scale = dist / pinchStartDist;
+      const newZoom = Math.max(0.3, Math.min(3, pinchStartZoom * scale));
+      setZoom(newZoom);
+      updatePinchIndicator();
+    }
+  }, { passive: false });
+
+  canvas.addEventListener('touchend', (e) => {
+    if (e.touches.length < 2) {
+      hidePinchIndicator();
+    }
+  }, { passive: true });
+}
+
+function getTouchDist(touches) {
+  const dx = touches[0].clientX - touches[1].clientX;
+  const dy = touches[0].clientY - touches[1].clientY;
+  return Math.sqrt(dx * dx + dy * dy);
+}
+
+function showPinchIndicator() {
+  const el = document.getElementById('pinchIndicator');
+  el.classList.add('show');
+  clearTimeout(pinchTimer);
+}
+
+function updatePinchIndicator() {
+  const el = document.getElementById('pinchIndicator');
+  el.textContent = Math.round(zoom * 100) + '%';
+  clearTimeout(pinchTimer);
+  pinchTimer = setTimeout(hidePinchIndicator, 1500);
+}
+
+function hidePinchIndicator() {
+  const el = document.getElementById('pinchIndicator');
+  el.classList.remove('show');
+}
+
+// ===========================
+// 触摸选中组件（防止300ms延迟）
+// ===========================
+function initTouchSelect() {
+  const content = document.getElementById('phoneContent');
+
+  content.addEventListener('touchstart', (e) => {
+    // 不阻止默认行为，让点击正常工作
+  }, { passive: true });
+}
+
+// ===========================
+// 组件操作
+// ===========================
+function addComponent(type, parentId = null) {
+  saveState();
+  const def = COMPONENT_DEFS[type];
+  const comp = {
+    id: genId(),
+    type: type,
+    attrs: { ...def.defaults },
+    children: def.isContainer ? [] : undefined
+  };
+
+  if (parentId) {
+    const parent = findComponent(componentTree, parentId);
+    if (parent && parent.children) {
+      parent.children.push(comp);
+    } else {
+      componentTree.push(comp);
+    }
+  } else {
+    componentTree.push(comp);
+  }
+
+  selectedId = comp.id;
+  renderAll();
+  showToast(`已添加 ${type}`);
+}
+
+function findComponent(tree, id) {
+  for (const c of tree) {
+    if (c.id === id) return c;
+    if (c.children) {
+      const found = findComponent(c.children, id);
+      if (found) return found;
+    }
+  }
+  return null;
+}
+
+function findParent(tree, id, parent = null) {
+  for (const c of tree) {
+    if (c.id === id) return parent;
+    if (c.children) {
+      const found = findParent(c.children, id, c);
+      if (found !== undefined) return found;
+    }
+  }
+  return undefined;
+}
+
+function removeComponent(tree, id) {
+  const idx = tree.findIndex(c => c.id === id);
+  if (idx !== -1) { tree.splice(idx, 1); return true; }
+  for (const c of tree) {
+    if (c.children && removeComponent(c.children, id)) return true;
+  }
+  return false;
+}
+
+function deleteSelected() {
+  if (!selectedId) return showToast('请先选择一个组件');
+  saveState();
+  removeComponent(componentTree, selectedId);
+  selectedId = null;
+  renderAll();
+  showToast('已删除');
+}
+
+function duplicateSelected() {
+  if (!selectedId) return showToast('请先选择一个组件');
+  const comp = findComponent(componentTree, selectedId);
+  if (!comp) return;
+  saveState();
+  const clone = deepClone(comp);
+  clone.id = genId();
+  reassignIds(clone);
+  const parent = findParent(componentTree, selectedId);
+  if (parent && parent.children) {
+    const idx = parent.children.findIndex(c => c.id === selectedId);
+    parent.children.splice(idx + 1, 0, clone);
+  } else {
+    const idx = componentTree.findIndex(c => c.id === selectedId);
+    componentTree.splice(idx + 1, 0, clone);
+  }
+  selectedId = clone.id;
+  renderAll();
+  showToast('已复制');
+}
+
+function reassignIds(comp) {
+  comp.id = genId();
+  if (comp.children) comp.children.forEach(c => reassignIds(c));
+}
+
+function moveUp() {
+  if (!selectedId) return;
+  const parent = findParent(componentTree, selectedId);
+  const list = parent ? parent.children : componentTree;
+  const idx = list.findIndex(c => c.id === selectedId);
+  if (idx <= 0) return;
+  saveState();
+  [list[idx - 1], list[idx]] = [list[idx], list[idx - 1]];
+  renderAll();
+}
+
+function moveDown() {
+  if (!selectedId) return;
+  const parent = findParent(componentTree, selectedId);
+  const list = parent ? parent.children : componentTree;
+  const idx = list.findIndex(c => c.id === selectedId);
+  if (idx === -1 || idx >= list.length - 1) return;
+  saveState();
+  [list[idx], list[idx + 1]] = [list[idx + 1], list[idx]];
+  renderAll();
+}
+
+function clearAll() {
+  if (componentTree.length === 0) return;
+  saveState();
+  componentTree = [];
+  selectedId = null;
+  renderAll();
+  showToast('已清空画布');
+}
+
+// 打开文件
+function openFile() {
+  document.getElementById('fileInput').click();
+}
+
+// 处理文件选择
+function handleFileSelect(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const content = e.target.result;
+      // 尝试解析为XML布局
+      parseXMLToLayout(content);
+      showToast(`已打开: ${file.name}`);
+    } catch (err) {
+      showToast('文件解析失败: ' + err.message);
+    }
+  };
+  reader.onerror = function() {
+    showToast('文件读取失败');
+  };
+  reader.readAsText(file);
+
+  // 清空input以便再次选择同一文件
+  event.target.value = '';
+}
+
+// 解析XML到布局
+function parseXMLToLayout(xml) {
+  saveState();
+  try {
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(xml, 'text/xml');
+    const root = doc.documentElement;
+    if (root.tagName === 'parsererror') throw new Error('XML格式错误');
+    componentTree = [parseXMLNode(root)];
+    selectedId = null;
+    renderAll();
+    showToast('XML已加载');
+  } catch (err) {
+    // 解析失败时加载到代码编辑器
+    document.getElementById('codeEditor').value = xml;
+    switchTab('code');
+    showToast('XML解析失败，已加载到代码编辑器');
+  }
+}
+
+function parseXMLNode(node) {
+  const comp = {
+    id: genId(),
+    type: node.tagName || 'View',
+    attrs: {},
+    children: undefined
+  };
+
+  // 解析属性
+  for (let i = 0; i < node.attributes.length; i++) {
+    const attr = node.attributes[i];
+    comp.attrs[attr.name.replace('android:', '').replace('app:', '').replace('xmlns:', '')] = attr.value;
+  }
+
+  // 解析子节点
+  const children = [];
+  for (let i = 0; i < node.childNodes.length; i++) {
+    const child = node.childNodes[i];
+    if (child.nodeType === 1) { // Element node
+      children.push(parseXMLNode(child));
+    }
+  }
+  if (children.length > 0) comp.children = children;
+
+  return comp;
+}
+
+// ===========================
+// 画布渲染
+// ===========================
+function renderCanvas() {
+  const content = document.getElementById('phoneContent');
+  const frame = document.getElementById('phoneFrame');
+  content.innerHTML = '';
+  content.style.transform = 'none';
+  content.style.transformOrigin = '';
+  frame.style.transform = `scale(${zoom})`;
+  frame.style.transformOrigin = 'top left';
+
+  if (componentTree.length === 0) {
+    content.innerHTML = `
+      <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:#999;font-size:13px;gap:8px;">
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#ccc" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+        拖拽组件到此处
+      </div>`;
+    return;
+  }
+
+  componentTree.forEach(comp => {
+    content.appendChild(renderComponent(comp));
+  });
+
+  // 更新状态栏
+  let count = 0;
+  function countAll(list) { list.forEach(c => { count++; if (c.children) countAll(c.children); }); }
+  countAll(componentTree);
+  document.getElementById('statusInfo').textContent = `组件: ${count}`;
+}
+
+function renderComponent(comp) {
+  const def = COMPONENT_DEFS[comp.type];
+  if (!def) return document.createElement('div');
+
+  const el = document.createElement('div');
+  el.className = 'canvas-component' + (comp.id === selectedId ? ' selected' : '');
+  el.dataset.id = comp.id;
+  el.dataset.type = comp.type;
+
+  // 组件标签
+  const label = document.createElement('div');
+  label.className = 'component-label';
+  label.textContent = comp.type;
+  el.appendChild(label);
+
+  // 缩放手柄
+  ['se', 'sw', 'ne', 'nw'].forEach(pos => {
+    const h = document.createElement('div');
+    h.className = `resize-handle ${pos}`;
+    el.appendChild(h);
+  });
+
+  // 应用样式
+  applyComponentStyle(el, comp);
+
+  // 事件
+  el.addEventListener('click', (e) => {
+    e.stopPropagation();
+    selectedId = comp.id;
+    renderAll();
+  });
+
+  el.addEventListener('contextmenu', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    selectedId = comp.id;
+    renderAll();
+    showContextMenu(e, comp.id);
+  });
+
+  // 渲染内容
+  renderComponentContent(el, comp);
+
+  // 渲染子组件
+  if (comp.children && comp.children.length > 0) {
+    comp.children.forEach(child => {
+      el.appendChild(renderComponent(child));
+    });
+  }
+
+  return el;
+}
+
+function applyComponentStyle(el, comp) {
+  const a = comp.attrs;
+  const s = el.style;
+
+  // 尺寸
+  if (a.layout_width === 'match_parent') s.width = '100%';
+  else if (a.layout_width === 'wrap_content') s.width = 'auto';
+  else s.width = dpToPx(parseValue(a.layout_width)) + 'px';
+
+  if (a.layout_height === 'match_parent') s.minHeight = '100%';
+  else if (a.layout_height === 'wrap_content') s.minHeight = 'auto';
+  else s.minHeight = dpToPx(parseValue(a.layout_height)) + 'px';
+
+  // 背景
+  if (a.background && a.background !== 'transparent') s.background = a.background;
+
+  // 内边距
+  if (a.padding) {
+    const p = parseValue(a.padding);
+    s.padding = dpToPx(p) + 'px';
+  }
+
+  // 外边距
+  if (a.layout_margin) {
+    const m = parseValue(a.layout_margin);
+    s.margin = dpToPx(m) + 'px';
+  }
+
+  // 布局方向
+  if (a.orientation === 'horizontal') {
+    s.display = 'flex';
+    s.flexDirection = 'row';
+    s.flexWrap = 'wrap';
+  } else if (comp.type === 'LinearLayout') {
+    s.display = 'flex';
+    s.flexDirection = 'column';
+  } else if (COMPONENT_DEFS[comp.type]?.isContainer) {
+    s.display = 'flex';
+    s.flexDirection = 'column';
+    s.position = 'relative';
+  }
+
+  // 对齐
+  if (a.gravity === 'center') { s.alignItems = 'center'; s.justifyContent = 'center'; }
+  else if (a.gravity === 'end') { s.alignItems = 'flex-end'; }
+  else if (a.gravity === 'top') { s.justifyContent = 'flex-start'; }
+  else if (a.gravity === 'bottom') { s.justifyContent = 'flex-end'; }
+
+  // CardView 特殊样式
+  if (comp.type === 'CardView') {
+    const r = parseValue(a.cardCornerRadius || 8);
+    const e = parseValue(a.cardElevation || 2);
+    s.borderRadius = dpToPx(r) + 'px';
+    s.boxShadow = `0 ${dpToPx(e)}px ${dpToPx(e * 2)}px rgba(0,0,0,0.12)`;
+    s.overflow = 'hidden';
+  }
+
+  // ScrollView
+  if (comp.type === 'ScrollView') {
+    s.overflowY = 'auto';
+    s.overflowX = 'hidden';
+  }
+}
+
+function renderComponentContent(el, comp) {
+  const a = comp.attrs;
+
+  switch (comp.type) {
+    case 'TextView': {
+      const span = document.createElement('span');
+      span.textContent = a.text || 'TextView';
+      span.style.fontSize = dpToPx(parseValue(a.textSize || 14)) + 'px';
+      span.style.color = a.textColor || '#333';
+      if (a.textStyle === 'bold') span.style.fontWeight = 'bold';
+      if (a.textStyle === 'italic') span.style.fontStyle = 'italic';
+      if (a.textAllCaps === 'true') span.style.textTransform = 'uppercase';
+      el.appendChild(span);
+      break;
+    }
+    case 'Button': {
+      const btn = document.createElement('div');
+      btn.textContent = a.text || 'Button';
+      btn.style.fontSize = dpToPx(parseValue(a.textSize || 14)) + 'px';
+      btn.style.color = a.textColor || '#fff';
+      btn.style.textAlign = 'center';
+      btn.style.borderRadius = '4px';
+      btn.style.cursor = 'pointer';
+      btn.style.fontWeight = '500';
+      btn.style.userSelect = 'none';
+      if (a.textAllCaps === 'true') btn.style.textTransform = 'uppercase';
+      el.appendChild(btn);
+      break;
+    }
+    case 'EditText': {
+      const input = document.createElement('div');
+      input.style.fontSize = dpToPx(parseValue(a.textSize || 14)) + 'px';
+      input.style.color = a.textColor || '#333';
+      input.style.borderRadius = '4px';
+      input.style.minHeight = dpToPx(40) + 'px';
+      input.style.display = 'flex';
+      input.style.alignItems = 'center';
+      if (a.inputType === 'password') {
+        input.textContent = '••••••••';
+        input.style.letterSpacing = '2px';
+      } else {
+        input.textContent = a.text || a.hint || '';
+        if (!a.text && a.hint) input.style.color = '#999';
+      }
+      el.appendChild(input);
+      break;
+    }
+    case 'ImageView': {
+      const img = document.createElement('div');
+      img.style.width = '100%';
+      img.style.height = '100%';
+      img.style.display = 'flex';
+      img.style.alignItems = 'center';
+      img.style.justifyContent = 'center';
+      img.style.color = '#999';
+      img.style.fontSize = '11px';
+      if (a.src) {
+        img.textContent = '📷 ' + a.src.split('/').pop();
+      } else {
+        img.innerHTML = '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#bbb" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>';
+      }
+      el.appendChild(img);
+      break;
+    }
+    case 'CheckBox': {
+      const cb = document.createElement('div');
+      cb.style.display = 'flex';
+      cb.style.alignItems = 'center';
+      cb.style.gap = '8px';
+      cb.style.fontSize = dpToPx(parseValue(a.textSize || 14)) + 'px';
+      cb.style.color = a.textColor || '#333';
+      const box = document.createElement('span');
+      box.textContent = a.checked === 'true' ? '☑' : '☐';
+      box.style.fontSize = '18px';
+      cb.appendChild(box);
+      cb.appendChild(document.createTextNode(a.text || 'CheckBox'));
+      el.appendChild(cb);
+      break;
+    }
+    case 'RadioButton': {
+      const rb = document.createElement('div');
+      rb.style.display = 'flex';
+      rb.style.alignItems = 'center';
+      rb.style.gap = '8px';
+      rb.style.fontSize = dpToPx(parseValue(a.textSize || 14)) + 'px';
+      rb.style.color = a.textColor || '#333';
+      const circle = document.createElement('span');
+      circle.textContent = a.checked === 'true' ? '◉' : '○';
+      circle.style.fontSize = '18px';
+      rb.appendChild(circle);
+      rb.appendChild(document.createTextNode(a.text || 'RadioButton'));
+      el.appendChild(rb);
+      break;
+    }
+    case 'Switch': {
+      const sw = document.createElement('div');
+      sw.style.display = 'flex';
+      sw.style.alignItems = 'center';
+      sw.style.gap = '8px';
+      sw.style.fontSize = dpToPx(parseValue(a.textSize || 14)) + 'px';
+      sw.style.color = a.textColor || '#333';
+      const toggle = document.createElement('span');
+      toggle.textContent = a.checked === 'true' ? '🟢' : '⚪';
+      toggle.style.fontSize = '16px';
+      sw.appendChild(toggle);
+      sw.appendChild(document.createTextNode(a.text || 'Switch'));
+      el.appendChild(sw);
+      break;
+    }
+    case 'ProgressBar': {
+      const pb = document.createElement('div');
+      pb.style.width = '100%';
+      pb.style.height = '100%';
+      pb.style.background = '#e0e0e0';
+      pb.style.borderRadius = '2px';
+      pb.style.overflow = 'hidden';
+      const fill = document.createElement('div');
+      const pct = Math.min(100, Math.max(0, parseValue(a.progress || 50)));
+      fill.style.width = pct + '%';
+      fill.style.height = '100%';
+      fill.style.background = '#4CAF50';
+      fill.style.borderRadius = '2px';
+      pb.appendChild(fill);
+      el.appendChild(pb);
+      break;
+    }
+    case 'SeekBar': {
+      const sb = document.createElement('div');
+      sb.style.width = '100%';
+      sb.style.padding = '8px 0';
+      sb.style.position = 'relative';
+      sb.style.height = '20px';
+      const track = document.createElement('div');
+      track.style.position = 'absolute';
+      track.style.top = '50%';
+      track.style.left = '0';
+      track.style.right = '0';
+      track.style.height = '4px';
+      track.style.background = '#e0e0e0';
+      track.style.borderRadius = '2px';
+      track.style.transform = 'translateY(-50%)';
+      const fill = document.createElement('div');
+      const pct = Math.min(100, Math.max(0, parseValue(a.progress || 50)));
+      fill.style.width = pct + '%';
+      fill.style.height = '100%';
+      fill.style.background = '#4CAF50';
+      fill.style.borderRadius = '2px';
+      track.appendChild(fill);
+      sb.appendChild(track);
+      const thumb = document.createElement('div');
+      thumb.style.position = 'absolute';
+      thumb.style.top = '50%';
+      thumb.style.left = `calc(${pct}% - 8px)`;
+      thumb.style.width = '16px';
+      thumb.style.height = '16px';
+      thumb.style.background = '#4CAF50';
+      thumb.style.borderRadius = '50%';
+      thumb.style.transform = 'translateY(-50%)';
+      thumb.style.boxShadow = '0 1px 3px rgba(0,0,0,0.3)';
+      sb.appendChild(thumb);
+      el.appendChild(sb);
+      break;
+    }
+    case 'Divider': {
+      el.style.width = '100%';
+      break;
+    }
+    case 'Space': {
+      el.style.opacity = '0.3';
+      el.style.border = '1px dashed #ccc';
+      el.style.minHeight = dpToPx(parseValue(a.layout_height || 16)) + 'px';
+      break;
+    }
+    case 'RecyclerView': {
+      const placeholder = document.createElement('div');
+      placeholder.style.width = '100%';
+      placeholder.style.height = '100%';
+      placeholder.style.display = 'flex';
+      placeholder.style.flexDirection = 'column';
+      placeholder.style.gap = '1px';
+      placeholder.style.background = '#f5f5f5';
+      for (let i = 0; i < 5; i++) {
+        const item = document.createElement('div');
+        item.style.padding = '12px 16px';
+        item.style.background = '#fff';
+        item.style.fontSize = '12px';
+        item.style.color = '#666';
+        item.textContent = `Item ${i + 1}`;
+        placeholder.appendChild(item);
+      }
+      el.appendChild(placeholder);
+      break;
+    }
+    case 'WebView': {
+      const wv = document.createElement('div');
+      wv.style.width = '100%';
+      wv.style.height = '100%';
+      wv.style.display = 'flex';
+      wv.style.flexDirection = 'column';
+      wv.style.alignItems = 'center';
+      wv.style.justifyContent = 'center';
+      wv.style.gap = '8px';
+      wv.style.color = '#7986cb';
+      wv.style.fontSize = '12px';
+      wv.innerHTML = '<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#7986cb" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>';
+      wv.innerHTML += `<span>WebView</span>`;
+      if (a.url) wv.innerHTML += `<span style="color:#999;font-size:10px;">${a.url}</span>`;
+      el.appendChild(wv);
+      break;
+    }
+    case 'Spinner': {
+      const sp = document.createElement('div');
+      sp.style.width = '100%';
+      sp.style.display = 'flex';
+      sp.style.alignItems = 'center';
+      sp.style.justifyContent = 'space-between';
+      sp.style.fontSize = '13px';
+      sp.style.color = '#333';
+      const entries = (a.entries || '选项1,选项2,选项3').split(',');
+      sp.textContent = entries[0];
+      const arrow = document.createElement('span');
+      arrow.textContent = '▾';
+      arrow.style.color = '#999';
+      arrow.style.fontSize = '14px';
+      sp.appendChild(arrow);
+      el.appendChild(sp);
+      break;
+    }
+    case 'RatingBar': {
+      const rb = document.createElement('div');
+      rb.style.display = 'flex';
+      rb.style.gap = '2px';
+      rb.style.alignItems = 'center';
+      const numStars = parseInt(a.numStars) || 5;
+      const rating = parseFloat(a.rating) || 0;
+      for (let i = 0; i < numStars; i++) {
+        const star = document.createElement('span');
+        star.textContent = i < Math.floor(rating) ? '★' : '☆';
+        star.style.fontSize = '20px';
+        star.style.color = i < Math.floor(rating) ? '#FFC107' : '#ccc';
+        rb.appendChild(star);
+      }
+      el.appendChild(rb);
+      break;
+    }
+    case 'SearchView': {
+      const sv = document.createElement('div');
+      sv.style.width = '100%';
+      sv.style.display = 'flex';
+      sv.style.alignItems = 'center';
+      sv.style.gap = '8px';
+      sv.style.padding = '8px 12px';
+      sv.style.background = '#f5f5f5';
+      sv.style.borderRadius = '8px';
+      sv.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#999" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>';
+      const hint = document.createElement('span');
+      hint.textContent = a.queryHint || '搜索...';
+      hint.style.color = '#999';
+      hint.style.fontSize = '13px';
+      sv.appendChild(hint);
+      el.appendChild(sv);
+      break;
+    }
+    case 'Chip': {
+      const chip = document.createElement('div');
+      chip.style.display = 'inline-flex';
+      chip.style.alignItems = 'center';
+      chip.style.gap = '6px';
+      chip.style.padding = dpToPx(6) + 'px ' + dpToPx(14) + 'px';
+      chip.style.borderRadius = '16px';
+      chip.style.fontSize = '12px';
+      chip.style.color = '#333';
+      chip.style.background = a.chipBackgroundColor || '#E8EAF6';
+      chip.style.border = '1px solid ' + (a.chipBackgroundColor || '#C5CAE9');
+      if (a.chipIcon === 'true') {
+        const icon = document.createElement('span');
+        icon.textContent = '●';
+        icon.style.fontSize = '10px';
+        icon.style.color = '#7986cb';
+        chip.appendChild(icon);
+      }
+      chip.appendChild(document.createTextNode(a.text || 'Chip'));
+      if (a.closeIcon === 'true') {
+        const close = document.createElement('span');
+        close.textContent = '✕';
+        close.style.fontSize = '12px';
+        close.style.color = '#999';
+        close.style.cursor = 'pointer';
+        chip.appendChild(close);
+      }
+      el.appendChild(chip);
+      break;
+    }
+    case 'FloatingActionButton': {
+      const fab = document.createElement('div');
+      fab.style.width = '100%';
+      fab.style.height = '100%';
+      fab.style.borderRadius = '50%';
+      fab.style.display = 'flex';
+      fab.style.alignItems = 'center';
+      fab.style.justifyContent = 'center';
+      fab.style.boxShadow = '0 4px 12px rgba(0,0,0,0.25)';
+      fab.style.cursor = 'pointer';
+      if (a.src) {
+        fab.innerHTML = `<span style="font-size:11px;color:rgba(255,255,255,0.8);">📷</span>`;
+      } else {
+        fab.innerHTML = '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>';
+      }
+      el.appendChild(fab);
+      el.style.borderRadius = '50%';
+      break;
+    }
+    case 'ImageButton': {
+      const ib = document.createElement('div');
+      ib.style.width = '100%';
+      ib.style.height = '100%';
+      ib.style.display = 'flex';
+      ib.style.alignItems = 'center';
+      ib.style.justifyContent = 'center';
+      ib.style.borderRadius = '50%';
+      ib.style.cursor = 'pointer';
+      if (a.src) {
+        ib.innerHTML = `<span style="font-size:11px;color:#999;">📷</span>`;
+      } else {
+        ib.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#666" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>';
+      }
+      el.appendChild(ib);
+      el.style.borderRadius = '50%';
+      break;
+    }
+    case 'ViewPager': {
+      const vp = document.createElement('div');
+      vp.style.width = '100%';
+      vp.style.height = '100%';
+      vp.style.position = 'relative';
+      vp.style.overflow = 'hidden';
+      // Pages
+      const pages = document.createElement('div');
+      pages.style.display = 'flex';
+      pages.style.width = '300%';
+      pages.style.height = '100%';
+      const colors = ['#e3f2fd', '#fce4ec', '#e8f5e9'];
+      const labels = ['Page 1', 'Page 2', 'Page 3'];
+      for (let i = 0; i < 3; i++) {
+        const page = document.createElement('div');
+        page.style.width = '33.333%';
+        page.style.height = '100%';
+        page.style.background = colors[i];
+        page.style.display = 'flex';
+        page.style.alignItems = 'center';
+        page.style.justifyContent = 'center';
+        page.style.fontSize = '14px';
+        page.style.color = '#666';
+        page.textContent = labels[i];
+        pages.appendChild(page);
+      }
+      vp.appendChild(pages);
+      // Dots indicator
+      const dots = document.createElement('div');
+      dots.style.position = 'absolute';
+      dots.style.bottom = '8px';
+      dots.style.left = '50%';
+      dots.style.transform = 'translateX(-50%)';
+      dots.style.display = 'flex';
+      dots.style.gap = '6px';
+      for (let i = 0; i < 3; i++) {
+        const dot = document.createElement('div');
+        dot.style.width = '6px';
+        dot.style.height = '6px';
+        dot.style.borderRadius = '50%';
+        dot.style.background = i === 0 ? '#333' : '#ccc';
+        dots.appendChild(dot);
+      }
+      vp.appendChild(dots);
+      el.appendChild(vp);
+      break;
+    }
+    case 'TabLayout': {
+      const tl = document.createElement('div');
+      tl.style.width = '100%';
+      tl.style.display = 'flex';
+      tl.style.position = 'relative';
+      const tabs = (a.tabs || '首页,发现,消息,我的').split(',');
+      tabs.forEach((tab, i) => {
+        const t = document.createElement('div');
+        t.style.flex = '1';
+        t.style.textAlign = 'center';
+        t.style.padding = '10px 4px';
+        t.style.fontSize = '12px';
+        t.style.color = i === 0 ? (a.tabSelectedTextColor || '#4CAF50') : '#999';
+        t.style.fontWeight = i === 0 ? '600' : '400';
+        t.style.cursor = 'pointer';
+        t.textContent = tab;
+        tl.appendChild(t);
+      });
+      // Indicator line
+      const indicator = document.createElement('div');
+      indicator.style.position = 'absolute';
+      indicator.style.bottom = '0';
+      indicator.style.left = '0';
+      indicator.style.width = (100 / tabs.length) + '%';
+      indicator.style.height = '2px';
+      indicator.style.background = a.tabIndicatorColor || '#4CAF50';
+      tl.appendChild(indicator);
+      el.appendChild(tl);
+      break;
+    }
+    case 'TextInputLayout': {
+      const til = document.createElement('div');
+      til.style.width = '100%';
+      // Label
+      const label = document.createElement('div');
+      label.textContent = a.hint || '标签文本';
+      label.style.fontSize = '11px';
+      label.style.color = a.background !== 'transparent' ? '#666' : '#999';
+      label.style.marginBottom = '4px';
+      label.style.fontWeight = '500';
+      til.appendChild(label);
+      // Input
+      const input = document.createElement('div');
+      input.style.fontSize = '14px';
+      input.style.color = '#333';
+      input.style.padding = '10px 12px';
+      input.style.borderBottom = '2px solid #e0e0e0';
+      input.style.borderRadius = '4px 4px 0 0';
+      input.style.background = '#fafafa';
+      input.textContent = '';
+      til.appendChild(input);
+      // Helper
+      if (a.helperText) {
+        const helper = document.createElement('div');
+        helper.textContent = a.helperText;
+        helper.style.fontSize = '10px';
+        helper.style.color = '#999';
+        helper.style.marginTop = '4px';
+        til.appendChild(helper);
+      }
+      el.appendChild(til);
+      break;
+    }
+    case 'NotificationBadge': {
+      const nb = document.createElement('div');
+      nb.style.display = 'inline-flex';
+      nb.style.alignItems = 'center';
+      nb.style.justifyContent = 'center';
+      nb.style.minWidth = '20px';
+      nb.style.height = '20px';
+      nb.style.borderRadius = '10px';
+      nb.style.background = a.badgeColor || '#F44336';
+      nb.style.color = '#fff';
+      nb.style.fontSize = '11px';
+      nb.style.fontWeight = '600';
+      nb.style.padding = '0 6px';
+      nb.textContent = a.text || '0';
+      el.appendChild(nb);
+      break;
+    }
+    case 'AvatarView': {
+      const av = document.createElement('div');
+      av.style.width = '100%';
+      av.style.height = '100%';
+      av.style.borderRadius = '50%';
+      av.style.display = 'flex';
+      av.style.alignItems = 'center';
+      av.style.justifyContent = 'center';
+      av.style.color = '#999';
+      av.innerHTML = '<svg width="50%" height="50%" viewBox="0 0 24 24" fill="none" stroke="#bbb" stroke-width="1.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>';
+      el.appendChild(av);
+      el.style.borderRadius = '50%';
+      break;
+    }
+  }
+}
+
+// ===========================
+// XML 生成与解析
+// ===========================
+function generateXML(tree, indent = 2) {
+  const pad = ' '.repeat(indent);
+  let xml = '<?xml version="1.0" encoding="utf-8"?>\n';
+  xml += '<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"\n';
+  xml += '    android:layout_width="match_parent"\n';
+  xml += '    android:layout_height="match_parent"\n';
+  xml += '    android:orientation="vertical">\n';
+
+  tree.forEach(comp => { xml += componentToXML(comp, indent + 2); });
+
+  xml += '</LinearLayout>';
+  return xml;
+}
+
+function componentToXML(comp, indent) {
+  const pad = ' '.repeat(indent);
+  const tag = comp.type;
+  let xml = pad + `<${tag}\n`;
+
+  for (const [key, val] of Object.entries(comp.attrs)) {
+    if (val === undefined || val === null || val === '') continue;
+    const attrName = key === 'text' || key === 'hint' || key === 'src'
+      ? `android:${key}`
+      : `android:${key}`;
+    xml += pad + `    ${attrName}="${val}"\n`;
+  }
+
+  if (comp.children && comp.children.length > 0) {
+    xml += pad + `>\n`;
+    comp.children.forEach(child => { xml += componentToXML(child, indent + 4); });
+    xml += pad + `</${tag}>\n`;
+  } else {
+    xml += pad + ` />\n`;
+  }
+
+  return xml;
+}
+
+function parseXML(xmlStr) {
+  // 简单XML解析器
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(xmlStr, 'text/xml');
+
+  if (doc.querySelector('parsererror')) {
+    showToast('XML 解析错误');
+    return null;
+  }
+
+  const root = doc.documentElement;
+  const tree = [];
+
+  for (const child of root.children) {
+    const comp = parseXMLElement(child);
+    if (comp) tree.push(comp);
+  }
+
+  return tree;
+}
+
+function parseXMLElement(el) {
+  const type = el.tagName;
+  if (!COMPONENT_DEFS[type]) return null;
+
+  const def = COMPONENT_DEFS[type];
+  const attrs = { ...def.defaults };
+  const children = [];
+
+  for (const attr of el.attributes) {
+    const name = attr.name.replace('android:', '');
+    attrs[name] = attr.value;
+  }
+
+  for (const child of el.children) {
+    const childComp = parseXMLElement(child);
+    if (childComp) children.push(childComp);
+  }
+
+  return {
+    id: genId(),
+    type,
+    attrs,
+    children: def.isContainer ? children : undefined
+  };
+}
+
+// ===========================
+// 属性面板
+// ===========================
+function renderPropsPanel() {
+  const empty = document.getElementById('propsEmpty');
+  const content = document.getElementById('propsContent');
+
+  if (!selectedId) {
+    empty.style.display = 'flex';
+    content.classList.remove('active');
+    return;
+  }
+
+  const comp = findComponent(componentTree, selectedId);
+  if (!comp) {
+    empty.style.display = 'flex';
+    content.classList.remove('active');
+    return;
+  }
+
+  empty.style.display = 'none';
+  content.classList.add('active');
+
+  const def = COMPONENT_DEFS[comp.type];
+  let html = '';
+
+  // 组件信息
+  html += `<div class="prop-section">
+    <div class="prop-section-header">组件信息</div>
+    <div class="prop-section-body">
+      <div class="prop-row">
+        <label>类型</label>
+        <input type="text" value="${comp.type}" readonly style="color:var(--accent);background:var(--bg-primary);" />
+      </div>
+      <div class="prop-row">
+        <label>ID</label>
+        <input type="text" value="${comp.id}" readonly style="color:var(--text-muted);font-size:10px;" />
+      </div>
+    </div>
+  </div>`;
+
+  // 布局属性
+  html += `<div class="prop-section">
+    <div class="prop-section-header" onclick="toggleSection(this)">布局属性 <span class="arrow">▼</span></div>
+    <div class="prop-section-body">
+      <div class="prop-row">
+        <label>宽度</label>
+        <select onchange="updateAttr('${comp.id}','layout_width',this.value)">
+          <option value="match_parent" ${comp.attrs.layout_width==='match_parent'?'selected':''}>match_parent</option>
+          <option value="wrap_content" ${comp.attrs.layout_width==='wrap_content'?'selected':''}>wrap_content</option>
+          <option value="custom" ${!['match_parent','wrap_content'].includes(comp.attrs.layout_width)?'selected':''}>自定义</option>
+        </select>
+      </div>
+      ${!['match_parent','wrap_content'].includes(comp.attrs.layout_width) ? `
+      <div class="prop-row">
+        <label>宽度值</label>
+        <input type="text" value="${comp.attrs.layout_width}" onchange="updateAttr('${comp.id}','layout_width',this.value)" />
+        <span class="unit">dp</span>
+      </div>` : ''}
+      <div class="prop-row">
+        <label>高度</label>
+        <select onchange="updateAttr('${comp.id}','layout_height',this.value)">
+          <option value="match_parent" ${comp.attrs.layout_height==='match_parent'?'selected':''}>match_parent</option>
+          <option value="wrap_content" ${comp.attrs.layout_height==='wrap_content'?'selected':''}>wrap_content</option>
+          <option value="custom" ${!['match_parent','wrap_content'].includes(comp.attrs.layout_height)?'selected':''}>自定义</option>
+        </select>
+      </div>
+      ${!['match_parent','wrap_content'].includes(comp.attrs.layout_height) ? `
+      <div class="prop-row">
+        <label>高度值</label>
+        <input type="text" value="${comp.attrs.layout_height}" onchange="updateAttr('${comp.id}','layout_height',this.value)" />
+        <span class="unit">dp</span>
+      </div>` : ''}
+    </div>
+  </div>`;
+
+  // 组件特有属性
+  if (def.props) {
+    html += `<div class="prop-section">
+      <div class="prop-section-header" onclick="toggleSection(this)">组件属性 <span class="arrow">▼</span></div>
+      <div class="prop-section-body">`;
+
+    for (const [key, propDef] of Object.entries(def.props)) {
+      if (key === 'layout_width' || key === 'layout_height' || key === 'layout_margin') continue;
+      const val = comp.attrs[key] || '';
+
+      if (propDef.type === 'select') {
+        html += `<div class="prop-row">
+          <label>${propDef.label}</label>
+          <select onchange="updateAttr('${comp.id}','${key}',this.value)">`;
+        for (const opt of propDef.options) {
+          html += `<option value="${opt}" ${val===opt?'selected':''}>${opt}</option>`;
+        }
+        html += `</select></div>`;
+      } else if (propDef.type === 'color') {
+        html += `<div class="prop-row">
+          <label>${propDef.label}</label>
+          <input type="color" value="${val.startsWith('#') ? val : '#ffffff'}" onchange="updateAttr('${comp.id}','${key}',this.value)" />
+          <input type="text" value="${val}" onchange="updateAttr('${comp.id}','${key}',this.value)" style="flex:1;" />
+        </div>`;
+      } else {
+        html += `<div class="prop-row">
+          <label>${propDef.label}</label>
+          <input type="text" value="${val}" onchange="updateAttr('${comp.id}','${key}',this.value)" />
+          ${propDef.unit ? `<span class="unit">${propDef.unit}</span>` : ''}
+        </div>`;
+      }
+    }
+
+    html += `</div></div>`;
+  }
+
+  // 所有属性（原始）
+  html += `<div class="prop-section">
+    <div class="prop-section-header" onclick="toggleSection(this)">所有属性 <span class="arrow">▼</span></div>
+    <div class="prop-section-body">`;
+
+  for (const [key, val] of Object.entries(comp.attrs)) {
+    html += `<div class="prop-row">
+      <label style="font-size:10px;color:var(--text-muted)">${key}</label>
+      <input type="text" value="${val}" onchange="updateAttr('${comp.id}','${key}',this.value)" style="font-size:10px;" />
+    </div>`;
+  }
+
+  html += `</div></div>`;
+
+  content.innerHTML = html;
+}
+
+function updateAttr(compId, key, value) {
+  saveState();
+  const comp = findComponent(componentTree, compId);
+  if (!comp) return;
+  comp.attrs[key] = value;
+  renderCanvas();
+  renderCode();
+  renderTree();
+  // 不重新渲染属性面板以避免失焦
+}
+
+function toggleSection(sectionId) {
+  const section = document.getElementById(sectionId);
+  if (section) section.classList.toggle('collapsed');
+}
+
+function toggleGroup(titleEl) {
+  titleEl.classList.toggle('group-collapsed');
+  const items = titleEl.nextElementSibling;
+  if (items && items.classList.contains('component-group-items')) {
+    items.classList.toggle('hidden');
+  }
+}
+
+function togglePanel(side) {
+  if (side === 'left') {
+    document.getElementById('panelLeft').classList.toggle('collapsed');
+  } else if (side === 'right') {
+    document.getElementById('panelRight').classList.toggle('collapsed');
+  }
+  setTimeout(() => renderCanvas(), 350);
+}
+
+// ===========================
+// 组件树
+// ===========================
+function renderTree() {
+  const tree = document.getElementById('componentTree');
+  let html = '';
+  const collapsedNodes = new Set(JSON.parse(localStorage.getItem('collapsedNodes') || '[]'));
+
+  function renderNode(comp, depth) {
+    const indent = '  '.repeat(depth);
+    const isActive = comp.id === selectedId;
+    const hasChildren = comp.children && comp.children.length > 0;
+    const def = COMPONENT_DEFS[comp.type];
+    const isCollapsed = collapsedNodes.has(comp.id);
+
+    html += `<div class="tree-node ${isActive ? 'active' : ''}" onclick="selectById('${comp.id}')" oncontextmenu="showContextMenu(event, '${comp.id}')">
+      <span class="indent">${indent}</span>
+      ${hasChildren ? `<span class="toggle ${isCollapsed ? 'collapsed' : ''}" onclick="event.stopPropagation();toggleTreeNode('${comp.id}')">▼</span>` : '<span class="toggle">·</span>'}
+      <span class="type-icon" style="color:${def ? def.color : 'var(--text-muted)'}">${def ? def.icon : '?'}</span>
+      ${comp.type}
+      ${comp.attrs.text ? `<span style="color:var(--text-muted);font-size:10px;margin-left:4px;">"${comp.attrs.text.substring(0, 12)}"</span>` : ''}
+    </div>`;
+
+    if (hasChildren) {
+      html += `<div class="tree-children ${isCollapsed ? 'collapsed' : ''}">`;
+      comp.children.forEach(child => renderNode(child, depth + 1));
+      html += '</div>';
+    }
+  }
+
+  componentTree.forEach(comp => renderNode(comp, 0));
+  tree.innerHTML = html || '<div style="padding:12px;color:var(--text-muted);font-size:11px;text-align:center;">暂无组件</div>';
+}
+
+function toggleTreeNode(id) {
+  const collapsed = new Set(JSON.parse(localStorage.getItem('collapsedNodes') || '[]'));
+  if (collapsed.has(id)) collapsed.delete(id);
+  else collapsed.add(id);
+  localStorage.setItem('collapsedNodes', JSON.stringify([...collapsed]));
+  renderTree();
+}
+
+function selectById(id) {
+  selectedId = id;
+  renderAll();
+}
+
+// ===========================
+// 代码编辑器
+// ===========================
+function renderCode() {
+  const editor = document.getElementById('codeEditor');
+  editor.value = generateXML(componentTree);
+}
+
+function syncFromCode() {
+  const editor = document.getElementById('codeEditor');
+  const xml = editor.value;
+  const parsed = parseXML(xml);
+  if (parsed) {
+    saveState();
+    componentTree = parsed;
+    renderCanvas();
+    renderTree();
+    showToast('代码已同步');
+  }
+}
+
+// ===========================
+// 标签页切换
+// ===========================
+function switchTab(tab) {
+  currentTab = tab;
+  document.querySelectorAll('.center-tab').forEach(t => {
+    t.classList.toggle('active', t.dataset.tab === tab);
+  });
+
+  const canvas = document.getElementById('canvasContainer');
+  const code = document.getElementById('codeContainer');
+
+  canvas.classList.remove('hidden');
+  code.classList.remove('active');
+
+  if (tab === 'design') {
+    canvas.style.display = 'flex';
+    code.style.display = 'none';
+  } else if (tab === 'code') {
+    canvas.style.display = 'none';
+    code.style.display = 'flex';
+    code.classList.add('active');
+    renderCode();
+  } else if (tab === 'split') {
+    canvas.style.display = 'flex';
+    code.style.display = 'flex';
+    code.classList.add('active');
+    canvas.style.flex = '1';
+    code.style.flex = '1';
+    renderCode();
+  }
+}
+
+// ===========================
+// 缩放
+// ===========================
+function setZoom(val) {
+  zoom = Math.max(0.3, Math.min(2, val));
+  document.getElementById('zoomInput').value = Math.round(zoom * 100) + '%';
+  renderCanvas();
+}
+
+function toggleOrientation() {
+  isLandscape = !isLandscape;
+  const frame = document.getElementById('phoneFrame');
+  frame.classList.toggle('landscape', isLandscape);
+  renderCanvas();
+  showToast(isLandscape ? '已切换为横屏' : '已切换为竖屏');
+}
+
+// 页面全屏
+function togglePageFullscreen() {
+  if (!document.fullscreenElement) {
+    document.documentElement.requestFullscreen().then(() => showToast('已进入全屏')).catch(() => showToast('无法进入全屏'));
+  } else {
+    document.exitFullscreen().then(() => showToast('已退出全屏'));
+  }
+}
+
+// 设计窗口全屏
+function toggleDesignFullscreen() {
+  const panel = document.querySelector('.panel-center');
+  if (!document.fullscreenElement) {
+    panel.requestFullscreen().then(() => showToast('设计窗口已全屏')).catch(() => showToast('无法全屏'));
+  } else {
+    document.exitFullscreen();
+  }
+}
+
+// 自适应：手机壳缩放适应设计窗口
+function fitToView() {
+  const container = document.getElementById('canvasContainer');
+  const frame = document.getElementById('phoneFrame');
+  const cr = container.getBoundingClientRect();
+  // 获取原始尺寸（不带transform scale）
+  const originalWidth = parseFloat(getComputedStyle(frame).width);
+  const originalHeight = parseFloat(getComputedStyle(frame).minHeight);
+  // 计算缩放比例，留出边距
+  const scaleX = (cr.width - 60) / originalWidth;
+  const scaleY = (cr.height - 60) / originalHeight;
+  const newZoom = Math.min(scaleX, scaleY, 1.5);
+  setZoom(Math.round(newZoom * 100) / 100);
+  showToast(`自适应: ${Math.round(newZoom * 100)}%`);
+}
+
+function toggleOrientation() {
+  const frame = document.getElementById('phoneFrame');
+  // 获取当前宽高
+  const currentWidth = parseFloat(getComputedStyle(frame).width);
+  const currentHeight = parseFloat(getComputedStyle(frame).minHeight);
+  // 交换宽高
+  frame.style.width = currentHeight + 'px';
+  frame.style.minHeight = currentWidth + 'px';
+  // 更新横竖屏状态
+  isLandscape = currentHeight > currentWidth;
+  frame.classList.toggle('landscape', isLandscape);
+  renderCanvas();
+  showToast(isLandscape ? '已切换为横屏' : '已切换为竖屏');
+}
+
+// 手机比例设置
+let phoneRatio = '9-16';
+function setPhoneRatio(ratio) {
+  phoneRatio = ratio;
+  const frame = document.getElementById('phoneFrame');
+  const ratios = {
+    '9-16': { w: 360, h: 640 },
+    '4-3': { w: 480, h: 360 },
+    '2-1': { w: 720, h: 360 }
+  };
+  const r = ratios[ratio];
+  if (r) {
+    frame.style.width = r.w + 'px';
+    frame.style.minHeight = r.h + 'px';
+    isLandscape = r.w > r.h;
+    frame.classList.toggle('landscape', isLandscape);
+    renderCanvas();
+    showToast(`已切换为 ${ratio.replace('-', ':')} 比例`);
+  }
+}
+
+// ===========================
+// 右键菜单
+// ===========================
+let contextTargetId = null;
+
+function showContextMenu(e, id) {
+  e.preventDefault();
+  e.stopPropagation();
+  const menu = document.getElementById('contextMenu');
+  // 如果有id参数（来自树节点），记录目标
+  if (id) {
+    contextTargetId = id;
+    selectedId = id;
+    renderAll();
+  }
+  menu.classList.add('show');
+  let x, y;
+  if (e.clientX !== undefined) {
+    x = e.clientX; y = e.clientY;
+  } else {
+    x = e; y = id; // 兼容旧的 (x, y) 调用
+  }
+  menu.style.left = x + 'px';
+  menu.style.top = y + 'px';
+  requestAnimationFrame(() => {
+    const r = menu.getBoundingClientRect();
+    if (r.right > window.innerWidth) menu.style.left = (x - r.width) + 'px';
+    if (r.bottom > window.innerHeight) menu.style.top = (y - r.height) + 'px';
+  });
+}
+
+function hideContextMenu() {
+  document.getElementById('contextMenu').classList.remove('show');
+  contextTargetId = null;
+}
+
+function ctxCopy() {
+  if (contextTargetId) { selectedId = contextTargetId; duplicateSelected(); }
+  hideContextMenu();
+}
+
+function ctxMoveUp() {
+  if (contextTargetId) { selectedId = contextTargetId; moveUp(); }
+  hideContextMenu();
+}
+
+function ctxMoveDown() {
+  if (contextTargetId) { selectedId = contextTargetId; moveDown(); }
+  hideContextMenu();
+}
+
+function ctxDelete() {
+  if (contextTargetId) { selectedId = contextTargetId; deleteSelected(); }
+  hideContextMenu();
+}
+
+document.addEventListener('click', hideContextMenu);
+
+// 点击画布空白处取消选中
+document.getElementById('phoneContent').addEventListener('click', (e) => {
+  if (e.target.id === 'phoneContent' || e.target.closest('.phone-content') === e.target) {
+    selectedId = null;
+    renderAll();
+  }
+});
+
+// ===========================
+// 导出XML
+// ===========================
+function exportXML() {
+  const xml = generateXML(componentTree);
+  const blob = new Blob([xml], { type: 'application/xml' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'activity_main.xml';
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast('XML 文件已导出');
+}
+
+// ===========================
+// 全局渲染
+// ===========================
+function renderAll() {
+  renderCanvas();
+  renderCode();
+  renderPropsPanel();
+  renderTree();
+}
+
+// ===========================
+// 代码编辑器事件
+// ===========================
+document.getElementById('codeEditor').addEventListener('input', function() {
+  // 实时同步代码到画布（带防抖）
+  clearTimeout(this._syncTimer);
+  this._syncTimer = setTimeout(() => {
+    const parsed = parseXML(this.value);
+    if (parsed) {
+      componentTree = parsed;
+      renderCanvas();
+      renderTree();
+    }
+  }, 800);
+});
+
+// Tab键支持
+document.getElementById('codeEditor').addEventListener('keydown', function(e) {
+  if (e.key === 'Tab') {
+    e.preventDefault();
+    const start = this.selectionStart;
+    const end = this.selectionEnd;
+    this.value = this.value.substring(0, start) + '  ' + this.value.substring(end);
+    this.selectionStart = this.selectionEnd = start + 2;
+  }
+  // Ctrl+S 同步
+  if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+    e.preventDefault();
+    syncFromCode();
+  }
+});
+
+// 键盘快捷键
+document.addEventListener('keydown', (e) => {
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') return;
+
+  if (e.key === 'Delete' || e.key === 'Backspace') {
+    e.preventDefault();
+    deleteSelected();
+  }
+  if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
+    e.preventDefault();
+    if (e.shiftKey) redo();
+    else undo();
+  }
+  if ((e.ctrlKey || e.metaKey) && e.key === 'd') {
+    e.preventDefault();
+    duplicateSelected();
+  }
+  if (e.key === 'Escape') {
+    selectedId = null;
+    renderAll();
+  }
+});
+
+// ===========================
+// 初始化
+// ===========================
+function init() {
+  renderComponentPanel();
+  initCanvasDrop();
+  initFrameDrag();
+  initTouchDrag();
+  initPinchZoom();
+  initTouchSelect();
+
+  // 添加默认示例布局
+  componentTree = [
+    {
+      id: genId(), type: 'LinearLayout',
+      attrs: { orientation: 'vertical', layout_width: 'match_parent', layout_height: 'match_parent', background: '#f5f5f5', padding: '16dp', gravity: 'start' },
+      children: [
+        {
+          id: genId(), type: 'TextView',
+          attrs: { text: '欢迎使用布局编辑器', layout_width: 'match_parent', layout_height: 'wrap_content', textSize: '22sp', textColor: '#333333', background: 'transparent', padding: '8dp', layout_margin: '8dp', gravity: 'center', textStyle: 'bold' },
+          children: undefined
+        },
+        {
+          id: genId(), type: 'CardView',
+          attrs: { layout_width: 'match_parent', layout_height: 'wrap_content', background: '#ffffff', padding: '16dp', layout_margin: '8dp', cardCornerRadius: '12dp', cardElevation: '2dp' },
+          children: [
+            {
+              id: genId(), type: 'TextView',
+              attrs: { text: '卡片标题', layout_width: 'match_parent', layout_height: 'wrap_content', textSize: '16sp', textColor: '#333333', background: 'transparent', padding: '4dp', layout_margin: '0dp', gravity: 'start', textStyle: 'bold' },
+              children: undefined
+            },
+            {
+              id: genId(), type: 'TextView',
+              attrs: { text: '这是一个卡片布局示例，展示了如何组合不同的组件来创建精美的UI界面。', layout_width: 'match_parent', layout_height: 'wrap_content', textSize: '13sp', textColor: '#666666', background: 'transparent', padding: '4dp', layout_margin: '4dp 0dp 0dp 0dp', gravity: 'start' },
+              children: undefined
+            },
+            {
+              id: genId(), type: 'Button',
+              attrs: { text: '了解更多', layout_width: 'wrap_content', layout_height: 'wrap_content', textSize: '13sp', textColor: '#ffffff', background: '#4CAF50', padding: '8dp 20dp', layout_margin: '12dp 0dp 0dp 0dp', textAllCaps: 'false' },
+              children: undefined
+            }
+          ]
+        },
+        {
+          id: genId(), type: 'EditText',
+          attrs: { text: '', hint: '请输入用户名', layout_width: 'match_parent', layout_height: 'wrap_content', textSize: '14sp', textColor: '#333333', background: '#ffffff', padding: '12dp', layout_margin: '8dp', inputType: 'text' },
+          children: undefined
+        },
+        {
+          id: genId(), type: 'EditText',
+          attrs: { text: '', hint: '请输入密码', layout_width: 'match_parent', layout_height: 'wrap_content', textSize: '14sp', textColor: '#333333', background: '#ffffff', padding: '12dp', layout_margin: '8dp', inputType: 'password' },
+          children: undefined
+        },
+        {
+          id: genId(), type: 'Button',
+          attrs: { text: '登 录', layout_width: 'match_parent', layout_height: 'wrap_content', textSize: '15sp', textColor: '#ffffff', background: '#2196F3', padding: '12dp', layout_margin: '16dp 8dp 8dp 8dp', textAllCaps: 'false' },
+          children: undefined
+        },
+        {
+          id: genId(), type: 'LinearLayout',
+          attrs: { orientation: 'horizontal', layout_width: 'match_parent', layout_height: 'wrap_content', background: 'transparent', padding: '0dp', gravity: 'center' },
+          children: [
+            {
+              id: genId(), type: 'CheckBox',
+              attrs: { text: '记住密码', layout_width: 'wrap_content', layout_height: 'wrap_content', textSize: '12sp', textColor: '#666666', layout_margin: '4dp', background: 'transparent', padding: '4dp', checked: 'false' },
+              children: undefined
+            },
+            {
+              id: genId(), type: 'TextView',
+              attrs: { text: '忘记密码？', layout_width: 'wrap_content', layout_height: 'wrap_content', textSize: '12sp', textColor: '#2196F3', background: 'transparent', padding: '4dp', layout_margin: '4dp', gravity: 'start', textStyle: 'normal' },
+              children: undefined
+            }
+          ]
+        }
+      ]
+    }
+  ];
+
+  renderAll();
+
+  // 退出确认
+  window.addEventListener('beforeunload', function(e) {
+    if (componentTree.length > 0) {
+      e.preventDefault();
+      e.returnValue = '您有未保存的更改，确定要离开吗？';
+      return e.returnValue;
+    }
+  });
+}
+
+init();
+</script>
+</body>
+</html>
