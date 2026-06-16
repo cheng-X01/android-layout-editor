@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#1a1a2e">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>密码保险箱</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- 锁屏页 -->
+    <div id="lock-screen" class="screen active">
+        <div class="lock-container">
+            <div class="lock-logo">
+                <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                    <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                </svg>
+            </div>
+            <h1 class="lock-title">密码保险箱</h1>
+            <p class="lock-subtitle" id="lock-subtitle">输入主密钥解锁</p>
+            
+            <form id="unlock-form" class="lock-form">
+                <div class="input-group">
+                    <input type="password" id="unlock-password" placeholder="输入主密钥" autocomplete="off" required>
+                    <button type="button" class="toggle-password" onclick="App.togglePasswordVisibility('unlock-password', this)">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                            <circle cx="12" cy="12" r="3"></circle>
+                        </svg>
+                    </button>
+                </div>
+                <button type="submit" class="btn-primary">解锁</button>
+            </form>
+            
+            <p id="unlock-error" class="error-msg hidden"></p>
+        </div>
+    </div>
+
+    <!-- 设置页（首次配置） -->
+    <div id="setup-screen" class="screen">
+        <div class="setup-container">
+            <div class="setup-header">
+                <h1>首次配置</h1>
+                <p>设置你的密码保险箱</p>
+            </div>
+            
+            <form id="setup-form" class="setup-form">
+                <div class="form-section">
+                    <h3>Gitee 同步配置</h3>
+                    <div class="input-group">
+                        <label>Gitee 私有令牌</label>
+                        <input type="password" id="setup-token" placeholder="单仓库授权令牌" autocomplete="off">
+                        <span class="input-hint">用于访问你的私有仓库，可到 Gitee 设置 → 私人令牌 生成</span>
+                    </div>
+                    <div class="input-group">
+                        <label>仓库地址</label>
+                        <input type="text" id="setup-repo" placeholder="https://gitee.com/用户名/仓库名" autocomplete="off">
+                        <span class="input-hint">确保仓库存在且已添加令牌访问权限</span>
+                    </div>
+                </div>
+                
+                <div class="form-section">
+                    <h3>主密钥设置</h3>
+                    <div class="input-group">
+                        <label>设置主密钥</label>
+                        <div class="password-input-row">
+                            <input type="password" id="setup-master-key" placeholder="设置主密钥（至少8位）" autocomplete="off" required>
+                            <button type="button" class="btn-secondary btn-small" onclick="App.generateMasterKey()">生成</button>
+                        </div>
+                    </div>
+                    <div class="input-group">
+                        <label>确认主密钥</label>
+                        <input type="password" id="setup-master-key-confirm" placeholder="再次输入主密钥" autocomplete="off" required>
+                    </div>
+                    <div class="security-tips">
+                        <p>⚠️ 主密钥非常重要：</p>
+                        <ul>
+                            <li>用于加密你的所有数据</li>
+                            <li>新设备同步需要此密钥</li>
+                            <li>请务必记住，丢失将无法恢复数据</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <button type="submit" class="btn-primary btn-full">完成配置</button>
+            </form>
+            
+            <p id="setup-error" class="error-msg hidden"></p>
+        </div>
+    </div>
+
+    <!-- 主界面 -->
+    <div id="main-screen" class="screen">
+        <!-- 顶部栏 -->
+        <header class="main-header">
+            <div class="header-left">
+                <h1>密码保险箱</h1>
+            </div>
+            <div class="header-right">
+                <button class="icon-btn" onclick="App.syncData()" title="同步">
+                    <svg id="sync-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="23 4 23 10 17 10"></polyline>
+                        <polyline points="1 20 1 14 7 14"></polyline>
+                        <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+                    </svg>
+                </button>
+                <button class="icon-btn" onclick="App.showSettings()" title="设置">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="3"></circle>
+                        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                    </svg>
+                </button>
+            </div>
+        </header>
+
+        <!-- 同步状态 -->
+        <div id="sync-status" class="sync-status hidden">
+            <div class="sync-info">
+                <span class="sync-badge" id="sync-badge">未同步</span>
+                <span id="sync-time">-</span>
+            </div>
+        </div>
+
+        <!-- 搜索栏 -->
+        <div class="search-bar">
+            <input type="text" id="search-input" placeholder="搜索账号..." oninput="App.searchAccounts(this.value)">
+            <button class="icon-btn" onclick="App.showAccountModal()">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="12" y1="5" x2="12" y2="19"></line>
+                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                </svg>
+            </button>
+        </div>
+
+        <!-- 分组列表 -->
+        <div class="groups-section">
+            <div class="section-header">
+                <h2>分组</h2>
+                <button class="icon-btn" onclick="App.showGroupModal()">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="12" y1="5" x2="12" y2="19"></line>
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                    </svg>
+                </button>
+            </div>
+            <div id="groups-list" class="groups-list"></div>
+        </div>
+
+        <!-- 账号列表 -->
+        <div class="accounts-section">
+            <div class="section-header">
+                <h2>账号 <span id="accounts-count">(0)</span></h2>
+                <button class="btn-secondary btn-small" onclick="App.toggleSelectMode()">多选</button>
+            </div>
+            <div id="accounts-list" class="accounts-list"></div>
+        </div>
+
+        <!-- 底部操作栏 -->
+        <div class="bottom-bar">
+            <button class="action-btn" onclick="App.showSyncModal()">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="16 16 12 12 8 16"></polyline>
+                    <line x1="12" y1="12" x2="12" y2="21"></line>
+                    <path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"></path>
+                </svg>
+                <span>云同步</span>
+            </button>
+            <button class="action-btn" onclick="App.showShareModal()">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="18" cy="5" r="3"></circle>
+                    <circle cx="6" cy="12" r="3"></circle>
+                    <circle cx="18" cy="19" r="3"></circle>
+                    <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
+                    <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
+                </svg>
+                <span>分享</span>
+            </button>
+            <button class="action-btn" onclick="App.showImportShare()">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                    <polyline points="17 8 12 3 7 8"></polyline>
+                    <line x1="12" y1="3" x2="12" y2="15"></line>
+                </svg>
+                <span>导入</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- 账号详情弹窗 -->
+    <div id="account-modal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="account-modal-title">新增账号</h3>
+                <button class="close-btn" onclick="App.closeAccountModal()">×</button>
+            </div>
+            <form id="account-form" class="modal-body">
+                <input type="hidden" id="account-id">
+                <div class="input-group">
+                    <label>分组</label>
+                    <select id="account-group"></select>
+                </div>
+                <div class="input-group">
+                    <label>标题</label>
+                    <input type="text" id="account-title" placeholder="如：微信、微博" required>
+                </div>
+                <div class="input-group">
+                    <label>账号</label>
+                    <input type="text" id="account-username" placeholder="用户名/邮箱/手机" required>
+                </div>
+                <div class="input-group">
+                    <label>密码</label>
+                    <div class="password-input-row">
+                        <input type="password" id="account-password" placeholder="密码" required>
+                        <button type="button" class="btn-secondary btn-small" onclick="App.generatePassword()">生成</button>
+                    </div>
+                </div>
+                <div class="input-group">
+                    <label>网址（可选）</label>
+                    <input type="url" id="account-url" placeholder="https://...">
+                </div>
+                <div class="input-group">
+                    <label>备注（可选）</label>
+                    <textarea id="account-notes" placeholder="备注信息..." rows="3"></textarea>
+                </div>
+            </form>
+            <div class="modal-footer">
+                <button type="button" class="btn-secondary" onclick="App.closeAccountModal()">取消</button>
+                <button type="button" class="btn-primary" onclick="App.saveAccount()">保存</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 分组管理弹窗 -->
+    <div id="group-modal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="group-modal-title">新增分组</h3>
+                <button class="close-btn" onclick="App.closeGroupModal()">×</button>
+            </div>
+            <form id="group-form" class="modal-body">
+                <input type="hidden" id="group-id">
+                <div class="input-group">
+                    <label>分组名称</label>
+                    <input type="text" id="group-name" placeholder="如：社交媒体、工作" required>
+                </div>
+                <div class="input-group">
+                    <label>图标（Emoji）</label>
+                    <input type="text" id="group-icon" placeholder="选择一个图标" maxlength="2">
+                    <div class="emoji-picker" id="emoji-picker"></div>
+                </div>
+            </form>
+            <div class="modal-footer">
+                <button type="button" class="btn-secondary" onclick="App.closeGroupModal()">取消</button>
+                <button type="button" class="btn-primary" onclick="App.saveGroup()">保存</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 同步弹窗 -->
+    <div id="sync-modal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>云同步</h3>
+                <button class="close-btn" onclick="App.closeSyncModal()">×</button>
+            </div>
+            <div class="modal-body">
+                <div id="sync-diff" class="sync-diff"></div>
+                <div id="sync-actions" class="sync-actions hidden"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn-secondary" onclick="App.closeSyncModal()">取消</button>
+                <button type="button" class="btn-primary" onclick="App.executeSync()">确认同步</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 分享弹窗 -->
+    <div id="share-modal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>分享账号</h3>
+                <button class="close-btn" onclick="App.closeShareModal()">×</button>
+            </div>
+            <div class="modal-body">
+                <p class="share-tip">已选择 <span id="selected-count">0</span> 条账号</p>
+                
+                <div class="share-options">
+                    <div class="share-option" onclick="App.showShareByTotp()">
+                        <div class="share-option-icon">
+                            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <polyline points="12 6 12 12 16 14"></polyline>
+                            </svg>
+                        </div>
+                        <div class="share-option-text">
+                            <h4>时序密码分享</h4>
+                            <p>固定链接 + 动态密码，最安全</p>
+                        </div>
+                    </div>
+                    
+                    <div class="share-option" onclick="App.showShareByGist()">
+                        <div class="share-option-icon">
+                            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path>
+                            </svg>
+                        </div>
+                        <div class="share-option-text">
+                            <h4>Gist 分享</h4>
+                            <p>一键复制链接，方便快捷</p>
+                        </div>
+                    </div>
+                    
+                    <div class="share-option" onclick="App.showShareByExport()">
+                        <div class="share-option-icon">
+                            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                <polyline points="7 10 12 15 17 10"></polyline>
+                                <line x1="12" y1="15" x2="12" y2="3"></line>
+                            </svg>
+                        </div>
+                        <div class="share-option-text">
+                            <h4>本地导出</h4>
+                            <p>下载加密文件，完全离线</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 时序密码分享面板 -->
+    <div id="totp-share-panel" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>时序密码分享</h3>
+                <button class="close-btn" onclick="App.closeTotpShare()">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="totp-display">
+                    <div class="totp-password" id="totp-password">--------</div>
+                    <div class="totp-timer">
+                        <span>剩余</span>
+                        <span id="totp-countdown">5:00</span>
+                    </div>
+                </div>
+                <div class="share-link-box">
+                    <label>Gist 链接</label>
+                    <div class="link-row">
+                        <input type="text" id="totp-gist-url" readonly>
+                        <button class="btn-secondary" onclick="App.copyText('totp-gist-url')">复制</button>
+                    </div>
+                </div>
+                <p class="share-reminder">⚠️ 请将链接和密码<strong>分开发送</strong></p>
+                <p class="share-hint">链接发微信/邮件，密码打电话/短信告知</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn-secondary" onclick="App.closeTotpShare()">关闭</button>
+                <button type="button" class="btn-primary" onclick="App.copyTotpPassword()">复制密码</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Gist 分享面板 -->
+    <div id="gist-share-panel" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Gist 分享</h3>
+                <button class="close-btn" onclick="App.closeGistShare()">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="input-group">
+                    <label>提取密码（分享后请告知对方）</label>
+                    <div class="share-key-display">
+                        <input type="text" id="gist-share-key" readonly>
+                        <button class="btn-secondary" onclick="App.copyText('gist-share-key')">复制</button>
+                    </div>
+                </div>
+                <div class="share-link-box">
+                    <label>分享链接</label>
+                    <div class="link-row">
+                        <input type="text" id="gist-share-url" readonly>
+                        <button class="btn-primary" onclick="App.copyAndCreateGist()">复制并创建</button>
+                    </div>
+                </div>
+                <p class="share-reminder">⚠️ 链接和密码都需要分享给对方</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- 本地导出面板 -->
+    <div id="export-share-panel" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>本地导出</h3>
+                <button class="close-btn" onclick="App.closeExportShare()">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="input-group">
+                    <label>设置导出密码</label>
+                    <input type="password" id="export-password" placeholder="设置导出文件的密码">
+                </div>
+                <div class="input-group">
+                    <label>确认密码</label>
+                    <input type="password" id="export-password-confirm" placeholder="再次输入密码">
+                </div>
+                <p class="share-hint">导出的 .pwsafe 文件需要此密码才能打开</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn-secondary" onclick="App.closeExportShare()">取消</button>
+                <button type="button" class="btn-primary" onclick="App.exportToFile()">导出文件</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 接收分享弹窗 -->
+    <div id="import-share-modal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>接收分享</h3>
+                <button class="close-btn" onclick="App.closeImportShare()">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="input-group">
+                    <label>分享链接或 Gist URL</label>
+                    <textarea id="import-url" placeholder="粘贴分享链接..." rows="3"></textarea>
+                </div>
+                <div class="input-group">
+                    <label>提取密码</label>
+                    <input type="password" id="import-password" placeholder="输入分享密码">
+                </div>
+                <div id="import-preview" class="import-preview hidden"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn-secondary" onclick="App.closeImportShare()">取消</button>
+                <button type="button" class="btn-primary" id="import-confirm-btn" onclick="App.confirmImport()" style="display: none;">确认导入</button>
+                <button type="button" class="btn-primary" id="import-decrypt-btn" onclick="App.importShare()">解密查看</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 设置弹窗 -->
+    <div id="settings-modal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>设置</h3>
+                <button class="close-btn" onclick="App.closeSettings()">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="settings-section">
+                    <h4>Gitee 配置</h4>
+                    <div class="input-group">
+                        <label>私有令牌</label>
+                        <input type="password" id="settings-token" placeholder="Gitee 令牌">
+                    </div>
+                    <div class="input-group">
+                        <label>仓库地址</label>
+                        <input type="text" id="settings-repo" placeholder="仓库地址">
+                    </div>
+                    <button class="btn-secondary btn-full" onclick="App.saveGiteeConfig()">保存配置</button>
+                </div>
+                
+                <div class="settings-section">
+                    <h4>主密钥</h4>
+                    <p class="settings-hint">主密钥用于加密数据，无法更改</p>
+                    <div class="input-group">
+                        <label>输入当前主密钥确认身份</label>
+                        <input type="password" id="settings-verify-key" placeholder="输入主密钥">
+                    </div>
+                    <p class="settings-hint">如需更改主密钥，请导出数据后重新配置</p>
+                </div>
+                
+                <div class="settings-section danger">
+                    <h4>危险操作</h4>
+                    <button class="btn-danger" onclick="App.clearAllData()">清除所有数据</button>
+                </div>
+                
+                <div class="settings-section">
+                    <h4>锁定</h4>
+                    <button class="btn-secondary btn-full" onclick="App.lock()">锁定应用</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast 提示 -->
+    <div id="toast" class="toast hidden">
+        <span id="toast-message"></span>
+    </div>
+
+    <script src="crypto.js"></script>
+    <script src="gitee-api.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
